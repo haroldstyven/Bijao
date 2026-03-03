@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, AlertCircle, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
+import { Download, AlertCircle, ArrowUpRight, ArrowDownRight, TrendingUp, Users, Package, Receipt, Sparkles } from 'lucide-react';
 
 export default function DashboardPage() {
     const currentDate = new Intl.DateTimeFormat('es-ES', {
