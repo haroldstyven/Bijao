@@ -42,7 +42,7 @@ def registrar_usuario(user: UserAuth):
             "id": user_id,
             "negocio_id": negocio_id,
             "nombre": user.name,
-            "rol": "admin"
+            "rol": "ADMIN"
         }).execute()
 
         # Iniciar sesión automáticamente después de registrar
