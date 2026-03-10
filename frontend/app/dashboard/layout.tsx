@@ -65,9 +65,9 @@ export default function DashboardLayout({
     ];
 
     return (
-        <div className="flex h-screen bg-[#F8FAFC] font-sans overflow-hidden">
+        <div className="flex h-screen bg-[#F8FAFC] dark:bg-slate-900 font-sans overflow-hidden transition-colors">
             {/* Sidebar Fijo */}
-            <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col shadow-sm z-10 relative">
+            <aside className="w-64 flex-shrink-0 bg-white dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700 flex flex-col shadow-sm z-10 relative transition-colors">
                 {/* Logo */}
                 <div className="h-20 flex items-center justify-center border-b border-gray-50">
                     <div className="flex flex-col items-center gap-1 mt-2 mb-2">
@@ -87,7 +87,7 @@ export default function DashboardLayout({
                                         {negocioNombre ? negocioNombre.charAt(0) : 'M'}
                                     </div>
                                 )}
-                                <span className="text-sm font-semibold text-gray-800 tracking-tight">
+                                <span className="text-sm font-semibold text-gray-800 dark:text-white tracking-tight">
                                     {negocioNombre || 'Mi Negocio'}
                                 </span>
                             </>
@@ -119,7 +119,7 @@ export default function DashboardLayout({
                 </nav>
 
                 {/* Bottom Section */}
-                <div className="p-4 border-t border-gray-50 flex flex-col gap-2 bg-white">
+                <div className="p-4 border-t border-gray-50 dark:border-slate-700 flex flex-col gap-2 bg-white dark:bg-slate-800 transition-colors">
                     {bottomNavigation.map((item) => {
                         const isActive = pathname === item.href;
                         const Icon = item.icon;
@@ -127,7 +127,7 @@ export default function DashboardLayout({
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${isActive ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white'
                                     }`}
                             >
                                 <Icon className="mr-3 h-5 w-5 text-gray-400" />
@@ -148,7 +148,7 @@ export default function DashboardLayout({
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto bg-slate-50 relative">
+            <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 relative transition-colors">
                 <div className="p-8 pb-20">
                     {children}
                 </div>

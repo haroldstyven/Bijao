@@ -74,6 +74,7 @@ export default function AjustesPage() {
                 logo_url: logoBase64 || undefined
             });
             alert('Ajustes guardados correctamente');
+            window.location.reload();
         } catch (err) {
             alert('Ajustes no se guardaron. Revisa tu conexión.');
         } finally {
@@ -99,36 +100,36 @@ export default function AjustesPage() {
         <div className="flex flex-col gap-6 max-w-4xl mx-auto">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
                     <Settings className="h-6 w-6 text-blue-600" />
                     Ajustes
                 </h1>
-                <p className="text-gray-500 text-sm mt-1">Personaliza Bijao a tu gusto: tu marca, tus colores y configuraciones.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Personaliza Bijao a tu gusto: tu marca, tus colores y configuraciones.</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col gap-8 p-6 md:p-8">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden flex flex-col gap-8 p-6 md:p-8">
 
                 {/* Section: Business Name */}
                 <section className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 mb-2">
                         <Building2 className="h-5 w-5 text-gray-400" />
-                        <h2 className="text-lg font-bold text-gray-900">Nombre del Negocio</h2>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Nombre del Negocio</h2>
                     </div>
                     <input
                         type="text"
                         value={businessName}
                         onChange={(e) => setBusinessName(e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                        className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                     />
                 </section>
 
-                <hr className="border-gray-100" />
+                <hr className="border-gray-100 dark:border-slate-700" />
 
                 {/* Section: Logo */}
                 <section className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 mb-2">
                         <ImageIcon className="h-5 w-5 text-gray-400" />
-                        <h2 className="text-lg font-bold text-gray-900">Logo (PNG)</h2>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Logo (PNG)</h2>
                     </div>
                     <div className="flex items-center gap-6">
                         {logoBase64 ? (
@@ -165,19 +166,19 @@ export default function AjustesPage() {
                     </div>
                 </section>
 
-                <hr className="border-gray-100" />
+                <hr className="border-gray-100 dark:border-slate-700" />
 
                 {/* Section: Appearance */}
                 <section className="flex flex-col gap-5">
                     <div className="flex items-center gap-2 mb-2">
                         <Palette className="h-5 w-5 text-gray-400" />
-                        <h2 className="text-lg font-bold text-gray-900">Apariencia</h2>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Apariencia</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Theme Selectors */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">Tema de la interfaz</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Tema de la interfaz</label>
                             <div className="flex gap-4">
                                 <button
                                     onClick={() => setTheme('light')}
@@ -188,23 +189,23 @@ export default function AjustesPage() {
                                 </button>
                                 <button
                                     onClick={() => setTheme('dark')}
-                                    className={`flex-1 flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-blue-500 bg-gray-900 outline outline-4 outline-blue-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'}`}
+                                    className={`flex-1 flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-blue-500 bg-gray-900 outline outline-4 outline-blue-50 dark:outline-blue-900' : 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 hover:border-gray-300'}`}
                                 >
                                     <Moon className={`h-8 w-8 ${theme === 'dark' ? 'text-white' : 'text-gray-500'}`} />
-                                    <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`}>Modo Oscuro</span>
+                                    <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>Modo Oscuro</span>
                                 </button>
                             </div>
                         </div>
 
                         {/* Accent Color */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">Color de acento</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Color de acento</label>
                             <div className="flex flex-col gap-4">
                                 <input
                                     type="text"
                                     value={accentColor}
                                     onChange={(e) => setAccentColor(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                                 />
                                 <div className="flex gap-3">
                                     {presetColors.map((color) => (
