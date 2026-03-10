@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Settings,
     Building2,
@@ -24,8 +24,21 @@ export default function AjustesPage() {
     const [businessName, setBusinessName] = useState('');
     const [theme, setTheme] = useState('light');
     const [accentColor, setAccentColor] = useState('#3B82F6');
+    const [logoBase64, setLogoBase64] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoBase64(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     useEffect(() => {
         const fetchNegocio = async () => {
@@ -40,6 +53,7 @@ export default function AjustesPage() {
                 if (b.nombre) setBusinessName(b.nombre);
                 if (b.tema) setTheme(b.tema);
                 if (b.color_acento) setAccentColor(b.color_acento);
+                if (b.logo_url) setLogoBase64(b.logo_url);
             } catch (err) {
                 console.error("No se pudo obtener la configuración", err);
             } finally {
@@ -56,7 +70,8 @@ export default function AjustesPage() {
             await updateNegocio(businessId, {
                 nombre: businessName,
                 tema: theme,
-                color_acento: accentColor
+                color_acento: accentColor,
+                logo_url: logoBase64 || undefined
             });
             alert('Ajustes guardados correctamente');
         } catch (err) {
@@ -103,7 +118,7 @@ export default function AjustesPage() {
                         type="text"
                         value={businessName}
                         onChange={(e) => setBusinessName(e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                     />
                 </section>
 
@@ -116,14 +131,33 @@ export default function AjustesPage() {
                         <h2 className="text-lg font-bold text-gray-900">Logo (PNG)</h2>
                     </div>
                     <div className="flex items-center gap-6">
-                        <div className="h-20 w-20 rounded-full bg-black flex items-center justify-center text-white text-3xl font-bold shadow-md">
-                            {businessName.charAt(0)}
-                        </div>
+                        {logoBase64 ? (
+                            <div className="h-20 w-20 rounded-full bg-black flex items-center justify-center overflow-hidden shadow-md">
+                                <img src={logoBase64} alt="Logo" className="w-full h-full object-cover" />
+                            </div>
+                        ) : (
+                            <div className="h-20 w-20 rounded-full bg-black flex items-center justify-center text-white text-3xl font-bold shadow-md">
+                                {businessName.charAt(0) || 'M'}
+                            </div>
+                        )}
                         <div className="flex flex-col gap-3">
-                            <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                                Seleccionar PNG
+                            <input
+                                type="file"
+                                accept="image/png, image/jpeg"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Seleccionar PNG/JPG
                             </button>
-                            <button className="flex items-center text-red-500 text-sm font-medium hover:text-red-700 transition-colors px-1">
+                            <button
+                                onClick={() => setLogoBase64(null)}
+                                className="flex items-center text-red-500 text-sm font-medium hover:text-red-700 transition-colors px-1"
+                            >
                                 <X className="h-4 w-4 mr-1" />
                                 Quitar logo
                             </button>

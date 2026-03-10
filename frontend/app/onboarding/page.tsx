@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Scissors, Cake, Shirt, Briefcase, Plus,
@@ -18,6 +18,19 @@ export default function OnboardingPage() {
     const [name, setName] = useState('');
     const [theme, setTheme] = useState('light');
     const [color, setColor] = useState('#3B82F6'); // Default Blue
+    const [logoBase64, setLogoBase64] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoBase64(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Colors array for Step 4
     const colors = ['#3B82F6', '#EF4444', '#10B981', '#8B5CF6', '#F97316', '#475569'];
@@ -31,7 +44,8 @@ export default function OnboardingPage() {
                     tipo_negocio: businessType || undefined,
                     nombre: name || undefined,
                     tema: theme,
-                    color_acento: color
+                    color_acento: color,
+                    logo_url: logoBase64 || undefined
                 });
             }
             router.push('/dashboard');
@@ -98,8 +112,8 @@ export default function OnboardingPage() {
                                 key={cat.id}
                                 onClick={() => setBusinessType(cat.title)}
                                 className={`flex flex-col items-center justify-center p-8 rounded-3xl border-2 transition-all duration-200 ${businessType === cat.title
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md scale-105'
-                                        : 'border-white hover:border-blue-200 bg-white text-gray-700 shadow-sm hover:shadow-md hover:-translate-y-1'
+                                    ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md scale-105'
+                                    : 'border-white hover:border-blue-200 bg-white text-gray-700 shadow-sm hover:shadow-md hover:-translate-y-1'
                                     }`}
                             >
                                 <cat.icon className="w-12 h-12 mb-4 stroke-[1.5]" />
@@ -119,7 +133,7 @@ export default function OnboardingPage() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ej: Salón Bijao"
-                        className="w-full text-center text-4xl font-bold px-8 py-6 rounded-3xl border-2 border-transparent shadow-sm bg-white focus:border-blue-600 focus:ring-0 outline-none transition-all placeholder:text-gray-300 placeholder:font-medium"
+                        className="w-full text-center text-3xl font-bold px-8 py-6 rounded-3xl border-2 border-gray-300 text-gray-900 shadow-sm bg-white focus:border-blue-600 focus:ring-0 outline-none transition-all placeholder:text-gray-300 placeholder:font-medium"
                         autoFocus={step === 2}
                     />
                 </div>
@@ -129,10 +143,24 @@ export default function OnboardingPage() {
                     <h2 className="text-4xl font-extrabold text-center text-gray-900 mb-3 tracking-tight">Sube tu logo</h2>
                     <p className="text-center text-lg text-gray-500 mb-10">Identidad visual. Puedes saltarlo y configurarlo luego.</p>
 
-                    <div className="w-full border-2 border-dashed border-gray-300 rounded-3xl p-16 flex flex-col items-center justify-center bg-white hover:bg-gray-50 hover:border-blue-400 cursor-pointer transition-colors group">
-                        <div className="w-20 h-20 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-blue-100 transition-all duration-300">
-                            <UploadCloud className="w-10 h-10" />
-                        </div>
+                    <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full border-2 border-dashed border-gray-300 rounded-3xl p-16 flex flex-col items-center justify-center bg-white hover:bg-gray-50 hover:border-blue-400 cursor-pointer transition-colors group relative overflow-hidden"
+                    >
+                        <input
+                            type="file"
+                            accept="image/png, image/jpeg"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                        />
+                        {logoBase64 ? (
+                            <img src={logoBase64} alt="Logo Preview" className="w-32 h-32 object-cover rounded-full shadow-md mb-6" />
+                        ) : (
+                            <div className="w-20 h-20 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-blue-100 transition-all duration-300">
+                                <UploadCloud className="w-10 h-10" />
+                            </div>
+                        )}
                         <p className="font-semibold text-xl text-gray-900 mb-2">Haz clic o arrastra una imagen</p>
                         <p className="text-gray-500">SVG, PNG, JPG (max. 2MB)</p>
                     </div>
@@ -150,8 +178,8 @@ export default function OnboardingPage() {
                                 <button
                                     onClick={() => setTheme('light')}
                                     className={`flex items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all ${theme === 'light'
-                                            ? 'border-blue-600 bg-blue-50 shadow-sm'
-                                            : 'border-gray-100 bg-white hover:border-gray-200'
+                                        ? 'border-blue-600 bg-blue-50 shadow-sm'
+                                        : 'border-gray-100 bg-white hover:border-gray-200'
                                         }`}
                                 >
                                     <Sun className={`w-8 h-8 ${theme === 'light' ? 'text-blue-600 fill-blue-100/50' : 'text-gray-400'}`} />
@@ -160,8 +188,8 @@ export default function OnboardingPage() {
                                 <button
                                     onClick={() => setTheme('dark')}
                                     className={`flex items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all ${theme === 'dark'
-                                            ? 'border-gray-900 bg-gray-900 text-white shadow-md'
-                                            : 'border-gray-100 bg-white hover:border-gray-200'
+                                        ? 'border-gray-900 bg-gray-900 text-white shadow-md'
+                                        : 'border-gray-100 bg-white hover:border-gray-200'
                                         }`}
                                 >
                                     <Moon className={`w-8 h-8 ${theme === 'dark' ? 'text-white fill-white/20' : 'text-gray-400'}`} />
@@ -178,8 +206,8 @@ export default function OnboardingPage() {
                                         key={c}
                                         onClick={() => setColor(c)}
                                         className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${color === c
-                                                ? 'ring-4 ring-offset-4 ring-gray-200 scale-110 shadow-lg'
-                                                : 'hover:scale-110 hover:shadow-md opacity-80'
+                                            ? 'ring-4 ring-offset-4 ring-gray-200 scale-110 shadow-lg'
+                                            : 'hover:scale-110 hover:shadow-md opacity-80'
                                             }`}
                                         style={{ backgroundColor: c }}
                                     />
