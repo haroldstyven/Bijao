@@ -93,6 +93,25 @@ export const deleteProducto = async (producto_id: string) => {
   const res = await fetch(`${API_URL}/api/inventario/${producto_id}`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Error al eliminar el producto');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Error al eliminar el producto');
+  }
+  return res.json();
+};
+
+export const importarProductos = async (negocio_id: string, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_URL}/api/inventario/${negocio_id}/importar`, {
+    method: 'POST',
+    body: formData,
+    // No headers for Content-Type when using FormData, fetch sets the boundary automatically
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Error al importar productos');
+  }
   return res.json();
 };

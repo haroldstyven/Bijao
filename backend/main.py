@@ -1,7 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
 from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate
+import pandas as pd
+import io
+import math
 
 app = FastAPI(title="Bijao API", version="1.0")
 
@@ -164,3 +167,73 @@ def eliminar_producto(producto_id: str):
         return {"mensaje": "Producto eliminado exitosamente"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# 10. Importar Productos masivamente desde Excel
+@app.post("/api/inventario/{negocio_id}/importar")
+async def importar_productos_excel(negocio_id: str, file: UploadFile = File(...)):
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="El archivo debe ser un Excel (.xlsx o .xls)")
+        
+    try:
+        content = await file.read()
+        df = pd.read_excel(io.BytesIO(content))
+        
+        # Diccionario para mapear posibles nombres de columnas en el Excel a nuestro esquema
+        column_mapping = {
+            "nombre": "nombre", "producto": "nombre",
+            "categoria": "categoria", "categoría": "categoria",
+            "precio": "precio_venta", "precio de venta": "precio_venta", "precio_venta": "precio_venta",
+            "costo": "costo", "costo unitario": "costo",
+            "stock": "stock_actual", "stock inicial": "stock_actual", "cantidad": "stock_actual", "stock_actual": "stock_actual",
+            "stock minimo": "stock_minimo", "stock mínimo": "stock_minimo", "stock_minimo": "stock_minimo",
+            "tipo": "tipo"
+        }
+        
+        # Renombrar columnas a minúsculas y quitar espacios extra para facilitar el mapeo
+        df.columns = [str(c).lower().strip() for c in df.columns]
+        
+        # Mapear columnas del df a las esperadas
+        mapped_df = pd.DataFrame()
+        for excel_col, df_col in df.items():
+            if excel_col in column_mapping:
+                mapped_df[column_mapping[excel_col]] = df_col
+                
+        if "nombre" not in mapped_df.columns:
+            raise HTTPException(status_code=400, detail="El excel debe tener al menos una columna 'nombre' o 'producto'")
+
+        productos_a_insertar = []
+        for index, row in mapped_df.iterrows():
+            if pd.isna(row.get('nombre')) or str(row.get('nombre')).strip() == '':
+                continue # Saltar filas sin nombre
+                
+            # Limpiar NaNs (convertirlos a None o sus valores numéricos por defecto)
+            def clean_number(val, default=0):
+                if pd.isna(val) or val == "" or val is None:
+                    return default
+                return float(val)
+                
+            producto = {
+                "negocio_id": negocio_id,
+                "nombre": str(row.get('nombre')),
+                "categoria": str(row.get('categoria', 'General')) if pd.notna(row.get('categoria')) else 'General',
+                "precio_venta": clean_number(row.get('precio_venta')),
+                "costo": clean_number(row.get('costo')),
+                "stock_actual": int(clean_number(row.get('stock_actual'))),
+                "stock_minimo": int(clean_number(row.get('stock_minimo'))),
+                "tipo": str(row.get('tipo', 'PRODUCTO')).upper() if pd.notna(row.get('tipo')) else 'PRODUCTO'
+            }
+            productos_a_insertar.append(producto)
+            
+        if not productos_a_insertar:
+            raise HTTPException(status_code=400, detail="No se encontraron productos válidos para importar")
+            
+        # Bulk insert
+        resultado = supabase.table("productos").insert(productos_a_insertar).execute()
+        
+        return {
+            "mensaje": f"Se importaron {len(productos_a_insertar)} productos exitosamente",
+            "data": resultado.data
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error procesando el Excel: {str(e)}")

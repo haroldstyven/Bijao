@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Script from 'next/script';
 import {
     Plus, Download, Upload, Search, Edit, Trash2,
-    MoreVertical, Package, TrendingDown, TrendingUp, AlertCircle, X, Save, Loader2
+    Package, TrendingDown, TrendingUp, AlertCircle, X, Save, Loader2
 } from 'lucide-react';
-import { getProductos, createProducto, updateProducto, deleteProducto } from '@/lib/api';
+import { getProductos, createProducto, updateProducto, deleteProducto, importarProductos } from '@/lib/api';
 
 interface Producto {
     id: string;
@@ -31,6 +32,8 @@ export default function InventarioPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form state
     const [nombre, setNombre] = useState('');
@@ -86,6 +89,55 @@ export default function InventarioPage() {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingProduct(null);
+    };
+
+    const closeToast = () => {
+        setToastMessage(null);
+    };
+
+    const handleExport = () => {
+        if (productos.length === 0) {
+            setToastMessage('No hay productos para exportar');
+            return;
+        }
+
+        // Use the global XLSX object loaded from the CDN script
+        const globalXLSX = (window as any).XLSX;
+        if (!globalXLSX) {
+            setToastMessage('La librería de Excel aún se está cargando, intenta de nuevo en un segundo.');
+            return;
+        }
+
+        const ws = globalXLSX.utils.json_to_sheet(productos);
+        const wb = globalXLSX.utils.book_new();
+        globalXLSX.utils.book_append_sheet(wb, ws, "Inventario");
+        globalXLSX.writeFile(wb, "Inventario_Bijao.xlsx");
+        setToastMessage("Inventario exportado exitosamente");
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const storedNegocio = localStorage.getItem('negocio_id');
+            if (!storedNegocio) throw new Error('No se encontró el ID del negocio');
+
+            const data = await importarProductos(storedNegocio, file);
+            setToastMessage(data.mensaje || 'Productos importados exitosamente');
+            fetchProductos(storedNegocio); // Refrescar la tabla
+        } catch (error: any) {
+            console.error("Error al importar:", error);
+            setToastMessage(error.message || 'Ocurrió un error al importar');
+        } finally {
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""; // Reset input
+            }
+        }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -158,13 +210,26 @@ export default function InventarioPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
-                        <Upload className="h-4 w-4" />
-                        Importar
+                    <button
+                        onClick={handleImportClick}
+                        className="flex items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors font-medium border border-gray-200 shadow-sm"
+                    >
+                        <Upload className="w-5 h-5 text-gray-500" />
+                        <span className="hidden sm:inline">Importar</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
-                        <Download className="h-4 w-4" />
-                        Exportar
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".xlsx, .xls"
+                        onChange={handleFileChange}
+                    />
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors font-medium border border-gray-200 shadow-sm"
+                    >
+                        <Download className="w-5 h-5 text-gray-500" />
+                        <span className="hidden sm:inline">Exportar</span>
                     </button>
                     <button onClick={() => handleOpenModal()} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20">
                         <Plus className="h-4 w-4" />
