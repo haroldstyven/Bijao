@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginUser } from '@/lib/api';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Smartphone, Chrome, Apple } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -12,6 +12,18 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Auto-fill form from successfully redirected registry
+    useEffect(() => {
+        const storedEmail = sessionStorage.getItem('temp_email');
+        const storedPassword = sessionStorage.getItem('temp_password');
+
+        if (storedEmail) setEmail(storedEmail);
+        if (storedPassword) setPassword(storedPassword);
+
+        sessionStorage.removeItem('temp_email');
+        sessionStorage.removeItem('temp_password');
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,8 +36,16 @@ export default function LoginPage() {
             if (response.access_token) {
                 localStorage.setItem('access_token', response.access_token);
             }
+            if (response.negocio_id) {
+                localStorage.setItem('negocio_id', response.negocio_id);
+            }
 
-            router.push('/dashboard');
+            // Redirección condicional Onboarding vs Dashboard
+            if (response.onboarding_completado === false) {
+                router.push('/onboarding');
+            } else {
+                router.push('/dashboard');
+            }
         } catch (err: any) {
             setError(err.message || 'Ocurrió un error inesperado al iniciar sesión.');
         } finally {
@@ -155,6 +175,42 @@ export default function LoginPage() {
                             )}
                         </button>
                     </form>
+
+                    <div className="relative my-8">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-gray-200" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500">O continuar con</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <button
+                            type="button"
+                            onClick={() => alert('Próximamente')}
+                            className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2"
+                        >
+                            <Chrome className="w-5 h-5 text-gray-700" />
+                            Continuar con Google
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => alert('Próximamente')}
+                            className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2"
+                        >
+                            <Apple className="w-5 h-5 text-gray-900" />
+                            Continuar con Apple
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => alert('Próximamente')}
+                            className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2"
+                        >
+                            <Smartphone className="w-5 h-5 text-gray-600" />
+                            Continuar con Número Celular
+                        </button>
+                    </div>
 
                     <div className="mt-8 text-center text-sm text-gray-600">
                         ¿No tienes una cuenta?{' '}
