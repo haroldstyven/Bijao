@@ -43,17 +43,13 @@ class ProductoUpdate(BaseModel):
 class ClienteCreate(BaseModel):
     nombre: str
     email: Optional[EmailStr] = None
-    telefono: Optional[str] = None
-    direccion: Optional[str] = None
+    celular: Optional[str] = None
     cumpleanos: Optional[str] = None
-    notas: Optional[str] = None
     negocio_id: Optional[str] = None
 
 class ClienteUpdate(BaseModel):
     nombre: Optional[str] = None
     email: Optional[EmailStr] = None
-    telefono: Optional[str] = None
-    direccion: Optional[str] = None
+    celular: Optional[str] = None
     cumpleanos: Optional[str] = None
-    notas: Optional[str] = None
     is_active: Optional[bool] = None

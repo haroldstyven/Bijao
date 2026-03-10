@@ -8,10 +8,8 @@ interface Cliente {
     id: string;
     nombre: string;
     email?: string;
-    telefono?: string;
-    direccion?: string;
+    celular?: string;
     cumpleanos?: string;
-    notas?: string;
     negocio_id?: string;
 }
 
@@ -28,10 +26,8 @@ export default function ClientesPage() {
     // Form state
     const [nombre, setNombre] = useState('');
     const [email, setEmail] = useState('');
-    const [telefono, setTelefono] = useState('');
-    const [direccion, setDireccion] = useState('');
+    const [celular, setCelular] = useState('');
     const [cumpleanos, setCumpleanos] = useState('');
-    const [notas, setNotas] = useState('');
 
     useEffect(() => {
         const storedNegocioId = localStorage.getItem('negocio_id');
@@ -60,18 +56,14 @@ export default function ClientesPage() {
             setEditingCliente(cliente);
             setNombre(cliente.nombre);
             setEmail(cliente.email || '');
-            setTelefono(cliente.telefono || '');
-            setDireccion(cliente.direccion || '');
+            setCelular(cliente.celular || '');
             setCumpleanos(cliente.cumpleanos || '');
-            setNotas(cliente.notas || '');
         } else {
             setEditingCliente(null);
             setNombre('');
             setEmail('');
-            setTelefono('');
-            setDireccion('');
+            setCelular('');
             setCumpleanos('');
-            setNotas('');
         }
         setIsModalOpen(true);
     };
@@ -89,10 +81,8 @@ export default function ClientesPage() {
             const data = {
                 nombre,
                 email: email || null,
-                telefono: telefono || null,
-                direccion: direccion || null,
+                celular: celular || null,
                 cumpleanos: cumpleanos || null,
-                notas: notas || null,
                 negocio_id: businessId
             };
 
@@ -125,7 +115,7 @@ export default function ClientesPage() {
     const filteredUsers = clientes.filter(p => {
         return p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (p.telefono && p.telefono.includes(searchTerm));
+            (p.celular && p.celular.includes(searchTerm));
     });
 
     const activeCustomers = clientes.length;
@@ -185,9 +175,7 @@ export default function ClientesPage() {
                             <tr className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">
                                 <th className="px-6 py-4">Cliente</th>
                                 <th className="px-6 py-4">Contacto</th>
-                                <th className="px-6 py-4">Ubicación</th>
                                 <th className="px-6 py-4">Cumpleaños</th>
-                                <th className="px-6 py-4">Notas</th>
                                 <th className="px-6 py-4 text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -226,23 +214,13 @@ export default function ClientesPage() {
                                                         <span>{item.email}</span>
                                                     </div>
                                                 )}
-                                                {item.telefono && (
+                                                {item.celular && (
                                                     <div className="flex items-center gap-1.5">
                                                         <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                                        <span>{item.telefono}</span>
+                                                        <span>{item.celular}</span>
                                                     </div>
                                                 )}
-                                                {!item.email && !item.telefono && <span className="text-gray-400 italic">Sin datos</span>}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-start gap-1.5 text-sm text-gray-600 dark:text-gray-300">
-                                                {item.direccion ? (
-                                                    <>
-                                                        <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />
-                                                        <span className="truncate max-w-[150px]">{item.direccion}</span>
-                                                    </>
-                                                ) : <span className="text-gray-400 italic">No especificada</span>}
+                                                {!item.email && !item.celular && <span className="text-gray-400 italic">Sin datos</span>}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -254,13 +232,6 @@ export default function ClientesPage() {
                                                     </>
                                                 ) : <span className="text-gray-400 italic">No especificado</span>}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {item.notas ? (
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 max-w-[200px]" title={item.notas}>
-                                                    {item.notas}
-                                                </p>
-                                            ) : <span className="text-xs text-gray-400 italic">Sin notas</span>}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -315,7 +286,7 @@ export default function ClientesPage() {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono o WhatsApp</label>
                                     <input
-                                        type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
+                                        type="tel" value={celular} onChange={(e) => setCelular(e.target.value)}
                                         className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
                                         placeholder="+57 320 000 0000"
                                     />
@@ -328,24 +299,6 @@ export default function ClientesPage() {
                                         className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
                                     />
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Útil para promociones o saludos de cumpleaños personalizados.</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dirección / Ubicación</label>
-                                    <textarea
-                                        value={direccion} onChange={(e) => setDireccion(e.target.value)}
-                                        className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all resize-none min-h-[80px]"
-                                        placeholder="Dirección de envío o ubicación del cliente"
-                                    ></textarea>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
-                                    <textarea
-                                        value={notas} onChange={(e) => setNotas(e.target.value)}
-                                        className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all resize-none min-h-[100px]"
-                                        placeholder="Información adicional, preferencias de compra..."
-                                    ></textarea>
                                 </div>
                             </form>
                         </div>
