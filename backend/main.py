@@ -45,11 +45,18 @@ def registrar_usuario(user: UserAuth):
             "rol": "admin"
         }).execute()
 
+        # Iniciar sesión automáticamente después de registrar
+        sign_in_response = supabase.auth.sign_in_with_password({
+            "email": user.email,
+            "password": user.password
+        })
+
         return {
             "mensaje": "Usuario y negocio creados exitosamente", 
+            "access_token": sign_in_response.session.access_token,
             "usuario_id": user_id,
             "negocio_id": negocio_id,
-            "access_token": response.session.access_token if response.session else None
+            "onboarding_completado": False
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
