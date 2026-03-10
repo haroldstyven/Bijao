@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
-from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate
+from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate, ClienteCreate, ClienteUpdate
 import pandas as pd
 import io
 import math
