@@ -61,18 +61,18 @@ export default function InventarioPage() {
                     <input
                         type="text"
                         placeholder="Buscar producto por nombre, SKU o categoría..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     />
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <select className="border border-gray-200 rounded-lg text-sm px-3 py-2 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
+                    <select className="border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
                         <option>Todas las Categorías</option>
                         <option>Postres</option>
                         <option>Bebidas</option>
                         <option>Panadería</option>
                     </select>
-                    <select className="border border-gray-200 rounded-lg text-sm px-3 py-2 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
+                    <select className="border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
                         <option>Estado: Todos</option>
                         <option>Stock Bajo</option>
                         <option>En Stock</option>

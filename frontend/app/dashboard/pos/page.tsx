@@ -48,7 +48,7 @@ export default function POSPage() {
                         <input
                             type="text"
                             placeholder="Buscar por nombre o código..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+                            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
                         />
                     </div>
                 </div>
@@ -160,7 +160,7 @@ export default function POSPage() {
                                 type="number"
                                 value={discount}
                                 onChange={(e) => setDiscount(Number(e.target.value))}
-                                className="w-16 px-2 py-1 text-right text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-16 px-2 py-1 text-right text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
                                 min="0"
                                 max="100"
                             />

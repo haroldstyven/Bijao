@@ -88,7 +88,7 @@ export default function CalculadoraPage() {
                                     value={cost1}
                                     onChange={(e) => setCost1(e.target.value)}
                                     placeholder="Ej. 10.00"
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                                 />
                             </div>
                         </div>
@@ -102,7 +102,7 @@ export default function CalculadoraPage() {
                                     value={margin1}
                                     onChange={(e) => setMargin1(e.target.value)}
                                     placeholder="Ej. 30"
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                                 />
                             </div>
                         </div>
@@ -116,7 +116,7 @@ export default function CalculadoraPage() {
                                     value={discount1}
                                     onChange={(e) => setDiscount1(e.target.value)}
                                     placeholder="Ej. 10"
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                                 />
                             </div>
                         </div>
@@ -164,7 +164,7 @@ export default function CalculadoraPage() {
                                     value={cost2}
                                     onChange={(e) => setCost2(e.target.value)}
                                     placeholder="Ej. 10.00"
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-gray-900 transition-all shadow-sm"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-blue-500 transition-all shadow-sm"
                                 />
                             </div>
                         </div>
@@ -178,7 +178,7 @@ export default function CalculadoraPage() {
                                     value={price2}
                                     onChange={(e) => setPrice2(e.target.value)}
                                     placeholder="Ej. 15.00"
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-gray-900 transition-all shadow-sm"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-blue-500 transition-all shadow-sm"
                                 />
                             </div>
                         </div>
