@@ -41,6 +41,7 @@ export default function InventarioPage() {
     const [costo, setCosto] = useState('');
     const [stock, setStock] = useState('');
     const [stockMinimo, setStockMinimo] = useState('');
+    const [tipo, setTipo] = useState('PRODUCTO');
 
     useEffect(() => {
         const storedNegocioId = localStorage.getItem('negocio_id');
@@ -73,6 +74,7 @@ export default function InventarioPage() {
             setCosto(product.costo.toString());
             setStock(product.stock_actual.toString());
             setStockMinimo(product.stock_minimo.toString());
+            setTipo(product.tipo || 'PRODUCTO');
         } else {
             setEditingProduct(null);
             setNombre('');
@@ -81,6 +83,7 @@ export default function InventarioPage() {
             setCosto('');
             setStock('');
             setStockMinimo('');
+            setTipo('PRODUCTO');
         }
         setIsModalOpen(true);
     };
@@ -161,10 +164,10 @@ export default function InventarioPage() {
                 nombre,
                 categoria: categoria || 'General',
                 precio_venta: parseFloat(precio) || 0,
-                costo: parseFloat(costo) || 0,
-                stock_actual: parseInt(stock, 10) || 0,
-                stock_minimo: parseInt(stockMinimo, 10) || 0,
-                tipo: 'PRODUCTO',
+                costo: tipo === 'SERVICIO' ? 0 : (parseFloat(costo) || 0),
+                stock_actual: tipo === 'SERVICIO' ? 0 : (parseInt(stock, 10) || 0),
+                stock_minimo: tipo === 'SERVICIO' ? 0 : (parseInt(stockMinimo, 10) || 0),
+                tipo: tipo,
                 negocio_id: businessId
             };
             if (editingProduct) {
@@ -332,11 +335,17 @@ export default function InventarioPage() {
                                                 <span className="font-semibold text-blue-600 dark:text-blue-400 text-sm">${item.precio_venta.toLocaleString('es-CO')}</span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-gray-600 dark:text-gray-300 text-sm">${item.costo.toLocaleString('es-CO')}</span>
+                                                {item.tipo === 'SERVICIO' ? (
+                                                    <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+                                                ) : (
+                                                    <span className="text-gray-600 dark:text-gray-300 text-sm">${item.costo.toLocaleString('es-CO')}</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-1.5">
-                                                    {margin >= 50 ? (
+                                                    {item.tipo === 'SERVICIO' ? (
+                                                        <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+                                                    ) : margin >= 50 ? (
                                                         <span className="text-green-600 dark:text-green-400 flex items-center font-medium text-sm">
                                                             <TrendingUp className="h-4 w-4 mr-1" />
                                                             {margin}%
@@ -350,7 +359,9 @@ export default function InventarioPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {item.stock_actual <= item.stock_minimo ? (
+                                                {item.tipo === 'SERVICIO' ? (
+                                                    <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+                                                ) : item.stock_actual <= item.stock_minimo ? (
                                                     <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold text-sm bg-red-50 dark:bg-red-900/20 w-fit px-2 py-1 rounded-md border border-red-100 dark:border-red-800/30">
                                                         <AlertCircle className="h-4 w-4" />
                                                         {item.stock_actual} uds
@@ -395,11 +406,25 @@ export default function InventarioPage() {
                         <div className="flex-1 overflow-y-auto p-6">
                             <form id="product-form" onSubmit={handleSave} className="flex flex-col gap-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre del producto</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Registro</label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer bg-white dark:bg-slate-700 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg flex-1">
+                                            <input type="radio" name="tipo" value="PRODUCTO" checked={tipo === 'PRODUCTO'} onChange={() => setTipo('PRODUCTO')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">Producto</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer bg-white dark:bg-slate-700 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg flex-1">
+                                            <input type="radio" name="tipo" value="SERVICIO" checked={tipo === 'SERVICIO'} onChange={() => setTipo('SERVICIO')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">Servicio</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre del {tipo === 'SERVICIO' ? 'servicio' : 'producto'}</label>
                                     <input
                                         type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)}
                                         className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                                        placeholder="Ej. Postre de Chocolate"
+                                        placeholder={tipo === 'SERVICIO' ? "Ej. Mantenimiento" : "Ej. Postre de Chocolate"}
                                     />
                                 </div>
 
@@ -419,15 +444,17 @@ export default function InventarioPage() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Costo Unitario</label>
-                                        <input
-                                            type="number" required min="0" step="0.01" value={costo} onChange={(e) => setCosto(e.target.value)}
-                                            className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                    <div>
+                                    {tipo !== 'SERVICIO' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Costo Unitario</label>
+                                            <input
+                                                type="number" required min="0" step="0.01" value={costo} onChange={(e) => setCosto(e.target.value)}
+                                                className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className={tipo === 'SERVICIO' ? "col-span-2" : ""}>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Precio de Venta</label>
                                         <input
                                             type="number" required min="0" step="0.01" value={precio} onChange={(e) => setPrecio(e.target.value)}
@@ -436,28 +463,33 @@ export default function InventarioPage() {
                                         />
                                     </div>
                                 </div>
-                                <div className="p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg">
-                                    <p className="text-xs text-blue-800 dark:text-blue-300 font-medium">Margen estimado: {calculateMargin(parseFloat(precio) || 0, parseFloat(costo) || 0)}%</p>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock Inicial</label>
-                                        <input
-                                            type="number" required min="0" value={stock} onChange={(e) => setStock(e.target.value)}
-                                            className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock Mínimo</label>
-                                        <input
-                                            type="number" required min="0" value={stockMinimo} onChange={(e) => setStockMinimo(e.target.value)}
-                                            className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
+                                {tipo !== 'SERVICIO' && (
+                                    <>
+                                        <div className="p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg">
+                                            <p className="text-xs text-blue-800 dark:text-blue-300 font-medium">Margen estimado: {calculateMargin(parseFloat(precio) || 0, parseFloat(costo) || 0)}%</p>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock Inicial</label>
+                                                <input
+                                                    type="number" required min="0" value={stock} onChange={(e) => setStock(e.target.value)}
+                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock Mínimo</label>
+                                                <input
+                                                    type="number" required min="0" value={stockMinimo} onChange={(e) => setStockMinimo(e.target.value)}
+                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </form>
                         </div>
 
