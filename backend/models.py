@@ -53,3 +53,20 @@ class ClienteUpdate(BaseModel):
     celular: Optional[str] = None
     cumpleanos: Optional[str] = None
     is_active: Optional[bool] = None
+
+class VentaDetalleCreate(BaseModel):
+    producto_id: str
+    cantidad: float
+    precio_unitario: float
+    costo_unitario: float
+    descuento_item: Optional[float] = 0.00
+
+class VentaCreate(BaseModel):
+    negocio_id: str
+    cliente_id: Optional[str] = None
+    numero_factura: str
+    subtotal: float
+    descuento_global: Optional[float] = 0.00
+    total: float
+    estado: Optional[str] = "VIGENTE"
+    detalles: list[VentaDetalleCreate]

@@ -52,10 +52,10 @@ export default function DashboardLayout({
         { name: 'Asistente', href: '/dashboard/asistente', icon: Sparkles },
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'POS / Venta', href: '/dashboard/pos', icon: ShoppingCart },
-        { name: 'Cotizaciones', href: '/dashboard/cotizaciones', icon: FileText },
+        { name: 'Historial de Ventas', href: '/dashboard/ventas', icon: FileText },
+        { name: 'Cotizaciones', href: '/dashboard/cotizaciones', icon: Receipt },
         { name: 'Inventario', href: '/dashboard/inventario', icon: Package },
         { name: 'Clientes', href: '/dashboard/clientes', icon: Users },
-        { name: 'Facturas', href: '/dashboard/facturas', icon: Receipt },
         { name: 'Marketing', href: '/dashboard/marketing', icon: Megaphone },
         { name: 'Calculadora', href: '/dashboard/calculadora', icon: Calculator },
     ];

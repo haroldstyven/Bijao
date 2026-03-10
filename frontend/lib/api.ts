@@ -155,3 +155,28 @@ export const deleteCliente = async (cliente_id: string) => {
   }
   return res.json();
 };
+
+export const createVenta = async (data: any) => {
+  const res = await fetch(`${API_URL}/api/ventas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Error al procesar la venta');
+  }
+  return res.json();
+};
+
+export const getVentas = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/ventas/${negocio_id}`);
+  if (!res.ok) throw new Error('Error al obtener el historial de ventas');
+  return res.json();
+};
+
+export const getVentaDetalles = async (venta_id: string) => {
+  const res = await fetch(`${API_URL}/api/ventas/detalle/${venta_id}`);
+  if (!res.ok) throw new Error('Error al obtener los detalles de la venta');
+  return res.json();
+};

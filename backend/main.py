@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
-from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate, ClienteCreate, ClienteUpdate
+from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate, ClienteCreate, ClienteUpdate, VentaCreate
 import pandas as pd
 import io
 import math
@@ -279,5 +279,87 @@ def eliminar_cliente(cliente_id: str):
     try:
         supabase.table("clientes").delete().eq("id", cliente_id).execute()
         return {"mensaje": "Cliente eliminado exitosamente"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# --- MÓDULO DE VENTAS Y FACTURACIÓN ---
+
+# 15. Crear Venta (Facturar)
+@app.post("/api/ventas")
+def crear_venta(venta: VentaCreate):
+    try:
+        # 1. Insertar en la tabla ventas
+        nueva_venta_data = {
+            "negocio_id": venta.negocio_id,
+            "cliente_id": venta.cliente_id,
+            "numero_factura": venta.numero_factura,
+            "subtotal": venta.subtotal,
+            "descuento_global": venta.descuento_global,
+            "total": venta.total,
+            "estado": venta.estado
+        }
+        
+        resultado_venta = supabase.table("ventas").insert(nueva_venta_data).execute()
+        if not resultado_venta.data:
+            raise Exception("Error al insertar la venta")
+            
+        venta_id = resultado_venta.data[0]["id"]
+        
+        # 2. Insertar los detalles de la venta y actualizar stock
+        detalles_a_insertar = []
+        for detalle in venta.detalles:
+            detalles_a_insertar.append({
+                "venta_id": venta_id,
+                "producto_id": detalle.producto_id,
+                "cantidad": detalle.cantidad,
+                "precio_unitario": detalle.precio_unitario,
+                "costo_unitario": detalle.costo_unitario,
+                "descuento_item": detalle.descuento_item
+            })
+            
+            # Obtener el producto actual y reducir stock
+            producto_db = supabase.table("productos").select("stock_actual").eq("id", detalle.producto_id).execute()
+            if producto_db.data:
+                stock_previo = producto_db.data[0].get("stock_actual", 0)
+                nuevo_stock = stock_previo - detalle.cantidad
+                supabase.table("productos").update({"stock_actual": nuevo_stock}).eq("id", detalle.producto_id).execute()
+
+        # Insertar todos los detalles juntos
+        if detalles_a_insertar:
+            supabase.table("venta_detalles").insert(detalles_a_insertar).execute()
+        
+        # 3. Actualizar métricas del Cliente (si se proporcionó)
+        if venta.cliente_id:
+            cliente_db = supabase.table("clientes").select("n_compras, total_consumido").eq("id", venta.cliente_id).execute()
+            if cliente_db.data:
+                compras_previas = cliente_db.data[0].get("n_compras") or 0
+                consumo_previo = float(cliente_db.data[0].get("total_consumido") or 0)
+                
+                supabase.table("clientes").update({
+                    "n_compras": compras_previas + 1,
+                    "total_consumido": consumo_previo + float(venta.total)
+                }).eq("id", venta.cliente_id).execute()
+
+        return {"mensaje": "Venta registrada exitosamente", "venta_id": venta_id}
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 16. Obtener Historial de Ventas por Negocio
+@app.get("/api/ventas/{negocio_id}")
+def obtener_ventas(negocio_id: str):
+    try:
+        # Traer ventas y cruzar con nombre de cliente (relación 1-1 opcional)
+        result = supabase.table("ventas").select("*, clientes(nombre)").eq("negocio_id", negocio_id).order("fecha_emision", desc=True).execute()
+        return {"data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 17. Obtener los detalles de una Venta
+@app.get("/api/ventas/detalle/{venta_id}")
+def obtener_detalles_venta(venta_id: str):
+    try:
+        result = supabase.table("venta_detalles").select("*, productos(nombre)").eq("venta_id", venta_id).execute()
+        return {"data": result.data}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
