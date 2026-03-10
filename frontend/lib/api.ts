@@ -59,3 +59,37 @@ export const updateNegocio = async (negocio_id: string, data: any) => {
   if (!res.ok) throw new Error('Error al actualizar el negocio');
   return res.json();
 };
+
+export const getProductos = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/inventario/${negocio_id}`);
+  if (!res.ok) throw new Error('Error al obtener los productos');
+  return res.json();
+};
+
+export const createProducto = async (data: any) => {
+  const res = await fetch(`${API_URL}/api/inventario`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Error al crear el producto');
+  return res.json();
+};
+
+export const updateProducto = async (producto_id: string, data: any) => {
+  const res = await fetch(`${API_URL}/api/inventario/${producto_id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Error al actualizar el producto');
+  return res.json();
+};
+
+export const deleteProducto = async (producto_id: string) => {
+  const res = await fetch(`${API_URL}/api/inventario/${producto_id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Error al eliminar el producto');
+  return res.json();
+};

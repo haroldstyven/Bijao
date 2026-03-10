@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
-from models import UserAuth, NegocioUpdate
+from models import UserAuth, NegocioUpdate, ProductoCreate, ProductoUpdate
 
 app = FastAPI(title="Bijao API", version="1.0")
 
@@ -122,5 +122,45 @@ def actualizar_negocio(negocio_id: str, negocio: NegocioUpdate):
         result = supabase.table("negocios").update(update_data).eq("id", negocio_id).execute()
         
         return {"mensaje": "Negocio actualizado correctamente", "data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 6. Crear Producto
+@app.post("/api/inventario")
+def crear_producto(producto: ProductoCreate):
+    try:
+        nuevo_producto = supabase.table("productos").insert(producto.dict()).execute()
+        return {"mensaje": "Producto creado exitosamente", "data": nuevo_producto.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 7. Obtener Productos por Negocio
+@app.get("/api/inventario/{negocio_id}")
+def obtener_productos(negocio_id: str):
+    try:
+        productos_db = supabase.table("productos").select("*").eq("negocio_id", negocio_id).execute()
+        return {"data": productos_db.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 8. Actualizar Producto
+@app.put("/api/inventario/{producto_id}")
+def actualizar_producto(producto_id: str, producto: ProductoUpdate):
+    try:
+        update_data = {k: v for k, v in producto.dict(exclude_unset=True).items() if v is not None}
+        if not update_data:
+            return {"mensaje": "No hay datos para actualizar"}
+            
+        result = supabase.table("productos").update(update_data).eq("id", producto_id).execute()
+        return {"mensaje": "Producto actualizado", "data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 9. Eliminar Producto
+@app.delete("/api/inventario/{producto_id}")
+def eliminar_producto(producto_id: str):
+    try:
+        supabase.table("productos").delete().eq("id", producto_id).execute()
+        return {"mensaje": "Producto eliminado exitosamente"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
