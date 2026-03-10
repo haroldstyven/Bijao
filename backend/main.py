@@ -237,3 +237,47 @@ async def importar_productos_excel(negocio_id: str, file: UploadFile = File(...)
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error procesando el Excel: {str(e)}")
+
+
+# --- MÓDULO DE CLIENTES ---
+
+# 11. Obtener Clientes de un Negocio
+@app.get("/api/clientes/{negocio_id}")
+def obtener_clientes(negocio_id: str):
+    try:
+        result = supabase.table("clientes").select("*").eq("negocio_id", negocio_id).order("created_at", desc=True).execute()
+        return {"data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 12. Crear Cliente
+@app.post("/api/clientes")
+def crear_cliente(cliente: ClienteCreate):
+    try:
+        nuevo_cliente = cliente.dict()
+        result = supabase.table("clientes").insert(nuevo_cliente).execute()
+        return {"mensaje": "Cliente creado exitosamente", "data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 13. Actualizar Cliente
+@app.put("/api/clientes/{cliente_id}")
+def actualizar_cliente(cliente_id: str, cliente: ClienteUpdate):
+    try:
+        update_data = {k: v for k, v in cliente.dict(exclude_unset=True).items() if v is not None}
+        if not update_data:
+            return {"mensaje": "No hay datos para actualizar"}
+            
+        result = supabase.table("clientes").update(update_data).eq("id", cliente_id).execute()
+        return {"mensaje": "Cliente actualizado", "data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 14. Eliminar Cliente
+@app.delete("/api/clientes/{cliente_id}")
+def eliminar_cliente(cliente_id: str):
+    try:
+        supabase.table("clientes").delete().eq("id", cliente_id).execute()
+        return {"mensaje": "Cliente eliminado exitosamente"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

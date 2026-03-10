@@ -115,3 +115,43 @@ export const importarProductos = async (negocio_id: string, file: File) => {
   }
   return res.json();
 };
+
+export const getClientes = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/clientes/${negocio_id}`);
+  if (!res.ok) throw new Error('Error al obtener los clientes');
+  return res.json();
+};
+
+export const createCliente = async (data: any) => {
+  const res = await fetch(`${API_URL}/api/clientes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Error al crear el cliente');
+  }
+  return res.json();
+};
+
+export const updateCliente = async (cliente_id: string, data: any) => {
+  const res = await fetch(`${API_URL}/api/clientes/${cliente_id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Error al actualizar el cliente');
+  return res.json();
+};
+
+export const deleteCliente = async (cliente_id: string) => {
+  const res = await fetch(`${API_URL}/api/clientes/${cliente_id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Error al eliminar el cliente');
+  }
+  return res.json();
+};
