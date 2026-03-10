@@ -8,6 +8,7 @@ import {
     Tag,
     ArrowRight,
     TrendingUp,
+    TrendingDown,
     AlertCircle
 } from 'lucide-react';
 
