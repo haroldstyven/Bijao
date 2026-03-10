@@ -44,24 +44,18 @@ export async function registerUser(data: any) {
   }
 }
 
-export async function updateNegocio(negocio_id: string, data: any) {
-  try {
-    const response = await fetch(`${API_URL}/api/negocios/${negocio_id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+export const getNegocio = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/negocios/${negocio_id}`);
+  if (!res.ok) throw new Error('Error al obtener el negocio');
+  return res.json();
+};
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.detail || 'Error al actualizar el negocio.');
-    }
-
-    return await response.json();
-  } catch (error: any) {
-    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      throw new Error('No se pudo conectar con el servidor. Por favor, intenta más tarde.');
-    }
-    throw error;
-  }
-}
+export const updateNegocio = async (negocio_id: string, data: any) => {
+  const res = await fetch(`${API_URL}/api/negocios/${negocio_id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Error al actualizar el negocio');
+  return res.json();
+};
