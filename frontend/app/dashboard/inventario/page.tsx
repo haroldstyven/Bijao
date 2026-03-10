@@ -33,7 +33,7 @@ export default function InventarioPage() {
 
     // Form state
     const [nombre, setNombre] = useState('');
-    const [categoria, setCategoria] = useState('Postres');
+    const [categoria, setCategoria] = useState('');
     const [precio, setPrecio] = useState('');
     const [costo, setCosto] = useState('');
     const [stock, setStock] = useState('');
@@ -73,7 +73,7 @@ export default function InventarioPage() {
         } else {
             setEditingProduct(null);
             setNombre('');
-            setCategoria('Postres');
+            setCategoria('');
             setPrecio('');
             setCosto('');
             setStock('');
@@ -94,11 +94,11 @@ export default function InventarioPage() {
         try {
             const data = {
                 nombre,
-                categoria,
-                precio: parseFloat(precio),
-                costo: parseFloat(costo),
-                stock: parseInt(stock, 10),
-                stock_minimo: parseInt(stockMinimo, 10),
+                categoria: categoria || 'General',
+                precio: parseFloat(precio) || 0,
+                costo: parseFloat(costo) || 0,
+                stock: parseInt(stock, 10) || 0,
+                stock_minimo: parseInt(stockMinimo, 10) || 0,
                 negocio_id: businessId
             };
             if (editingProduct) {
@@ -131,6 +131,8 @@ export default function InventarioPage() {
         if (price <= 0) return 0;
         return Math.round(((price - cost) / price) * 100);
     };
+
+    const uniqueCategories = Array.from(new Set(productos.map(p => p.categoria))).filter(Boolean);
 
     const filteredProducts = productos.filter(p => {
         const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase());
@@ -188,10 +190,9 @@ export default function InventarioPage() {
                         onChange={(e) => setCategoryFilter(e.target.value)}
                         className="border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
                         <option>Todas las Categorías</option>
-                        <option>Postres</option>
-                        <option>Bebidas</option>
-                        <option>Panadería</option>
-                        <option>Salados</option>
+                        {uniqueCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
                     </select>
                     <select
                         value={statusFilter}
@@ -325,14 +326,17 @@ export default function InventarioPage() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
-                                    <select
-                                        required value={categoria} onChange={(e) => setCategoria(e.target.value)}
-                                        className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
-                                        <option value="Postres">Postres</option>
-                                        <option value="Bebidas">Bebidas</option>
-                                        <option value="Panadería">Panadería</option>
-                                        <option value="Salados">Salados</option>
-                                    </select>
+                                    <input
+                                        type="text" required value={categoria} onChange={(e) => setCategoria(e.target.value)}
+                                        list="categorias-list"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                                        placeholder="Ej. Postres, Servicios, Ropa..."
+                                    />
+                                    <datalist id="categorias-list">
+                                        {uniqueCategories.map(cat => (
+                                            <option key={cat} value={cat} />
+                                        ))}
+                                    </datalist>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">

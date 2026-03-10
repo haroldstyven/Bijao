@@ -45,7 +45,8 @@ export default function OnboardingPage() {
                     nombre: name || undefined,
                     tema: theme,
                     color_acento: color,
-                    logo_url: logoBase64 || undefined
+                    logo_url: logoBase64 || undefined,
+                    onboarding_completado: true
                 });
             }
             router.push('/dashboard');
