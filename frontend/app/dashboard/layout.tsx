@@ -13,8 +13,11 @@ import {
     Calculator,
     Settings,
     Sparkles,
-    Zap
+    Zap,
+    Loader2
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getNegocio } from '@/lib/api';
 
 export default function DashboardLayout({
     children,
@@ -22,6 +25,24 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const [negocioNombre, setNegocioNombre] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchNegocio = async () => {
+            const negocioId = localStorage.getItem('negocio_id');
+            if (negocioId) {
+                try {
+                    const data = await getNegocio(negocioId);
+                    if (data.nombre) setNegocioNombre(data.nombre);
+                } catch (error) {
+                    console.error("No se pudo cargar el negocio en el sidebar", error);
+                }
+            }
+            setIsLoading(false);
+        };
+        fetchNegocio();
+    }, []);
 
     const navigation = [
         { name: 'Asistente', href: '/dashboard/asistente', icon: Sparkles },
@@ -46,10 +67,21 @@ export default function DashboardLayout({
                 {/* Logo */}
                 <div className="h-20 flex items-center justify-center border-b border-gray-50">
                     <div className="flex flex-col items-center gap-1 mt-2 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-xl shadow-md">
-                            M
-                        </div>
-                        <span className="text-sm font-semibold text-gray-800 tracking-tight">Mi Negocio</span>
+                        {isLoading ? (
+                            <div className="flex flex-col items-center gap-2">
+                                <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                                <span className="text-xs text-gray-400">Cargando...</span>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-xl shadow-md">
+                                    {negocioNombre ? negocioNombre.charAt(0) : 'M'}
+                                </div>
+                                <span className="text-sm font-semibold text-gray-800 tracking-tight">
+                                    {negocioNombre || 'Mi Negocio'}
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -64,8 +96,8 @@ export default function DashboardLayout({
                                 key={item.name}
                                 href={item.href}
                                 className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${isActive
-                                        ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                     }`}
                             >
                                 <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-blue-500'} transition-colors`} />

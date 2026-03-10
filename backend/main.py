@@ -95,15 +95,26 @@ def iniciar_sesion(user: UserAuth):
     except Exception as e:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-# 4. Actualizar Negocio (Onboarding o Ajustes)
+# 4. Obtener Negocio (Ajustes y Sidebar)
+@app.get("/api/negocios/{negocio_id}")
+def obtener_negocio(negocio_id: str):
+    try:
+        # Consultar la tabla negocios para obtener todos los campos
+        negocio_db = supabase.table("negocios").select("*").eq("id", negocio_id).execute()
+        
+        if not negocio_db.data:
+            raise HTTPException(status_code=404, detail="Negocio no encontrado")
+            
+        return negocio_db.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 5. Actualizar Negocio (Onboarding o Ajustes)
 @app.put("/api/negocios/{negocio_id}")
 def actualizar_negocio(negocio_id: str, negocio: NegocioUpdate):
     try:
         # Extraer solo los campos que fueron enviados (no None)
         update_data = {k: v for k, v in negocio.dict(exclude_unset=True).items() if v is not None}
-        
-        # Forzar a Verdadero el Onboarding completado
-        update_data["onboarding_completado"] = True
         
         if not update_data:
             return {"mensaje": "No hay datos para actualizar"}

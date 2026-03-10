@@ -11,13 +11,65 @@ import {
     Save,
     DownloadCloud,
     UploadCloud,
-    X
+    X,
+    LogOut,
+    Loader2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { getNegocio, updateNegocio } from '@/lib/api';
 
 export default function AjustesPage() {
-    const [businessName, setBusinessName] = useState('Mi Negocio');
+    const router = useRouter();
+    const [businessId, setBusinessId] = useState<string | null>(null);
+    const [businessName, setBusinessName] = useState('');
     const [theme, setTheme] = useState('light');
     const [accentColor, setAccentColor] = useState('#3B82F6');
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchNegocio = async () => {
+            const storedNegocioId = localStorage.getItem('negocio_id');
+            if (!storedNegocioId) {
+                setIsLoading(false);
+                return;
+            }
+            setBusinessId(storedNegocioId);
+            try {
+                const b = await getNegocio(storedNegocioId);
+                if (b.nombre) setBusinessName(b.nombre);
+                if (b.tema) setTheme(b.tema);
+                if (b.color_acento) setAccentColor(b.color_acento);
+            } catch (err) {
+                console.error("No se pudo obtener la configuración", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchNegocio();
+    }, []);
+
+    const handleSave = async () => {
+        if (!businessId) return;
+        setIsSaving(true);
+        try {
+            await updateNegocio(businessId, {
+                nombre: businessName,
+                tema: theme,
+                color_acento: accentColor
+            });
+            alert('Ajustes guardados correctamente');
+        } catch (err) {
+            alert('Ajustes no se guardaron. Revisa tu conexión.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        router.push('/login');
+    };
 
     const presetColors = [
         { name: 'Red', hex: '#EF4444', bg: 'bg-red-500' },
@@ -137,9 +189,22 @@ export default function AjustesPage() {
 
                 {/* Save Button */}
                 <div className="mt-4">
-                    <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 text-lg">
-                        <Save className="h-5 w-5" />
-                        Guardar y aplicar cambios
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving || isLoading}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 text-lg disabled:opacity-75 disabled:cursor-not-allowed"
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                                Guardando...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="h-5 w-5" />
+                                Guardar y aplicar cambios
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
@@ -160,6 +225,17 @@ export default function AjustesPage() {
                         Importar
                     </button>
                 </div>
+            </div>
+
+            {/* Logout Action */}
+            <div className="flex justify-start">
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center text-red-600 text-sm font-semibold hover:text-red-800 transition-colors bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl"
+                >
+                    <LogOut className="h-5 w-5 mr-2" />
+                    Cerrar Sesión
+                </button>
             </div>
         </div>
     );

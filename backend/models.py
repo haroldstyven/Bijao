@@ -12,3 +12,4 @@ class NegocioUpdate(BaseModel):
     logo_url: Optional[str] = None
     tema: Optional[str] = None
     color_acento: Optional[str] = None
+    onboarding_completado: Optional[bool] = None
