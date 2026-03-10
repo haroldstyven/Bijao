@@ -88,7 +88,7 @@ export default function POSPage() {
                                     <p className="text-xs text-gray-500 mt-1">Stock: {product.stock}</p>
                                 </div>
                                 <div className="mt-3 flex items-center justify-between">
-                                    <span className="font-bold text-blue-600">${product.price.toFixed(2)}</span>
+                                    <span className="font-bold text-blue-600">${product.price.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     <button className="h-8 w-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                         <Plus className="h-4 w-4" />
                                     </button>
@@ -119,10 +119,10 @@ export default function POSPage() {
                                 <div key={item.id} className="flex items-start justify-between group">
                                     <div className="flex-1">
                                         <h4 className="text-sm font-semibold text-gray-800">{item.name}</h4>
-                                        <span className="text-xs text-blue-600 font-medium">${item.price.toFixed(2)} c/u</span>
+                                        <span className="text-xs text-blue-600 font-medium">${item.price.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} c/u</span>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
-                                        <span className="font-bold text-gray-900 text-sm">${(item.price * item.qty).toFixed(2)}</span>
+                                        <span className="font-bold text-gray-900 text-sm">${(item.price * item.qty).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1 border border-gray-100">
                                             <button className="p-1 hover:bg-white rounded text-gray-500 hover:text-gray-800 transition-colors shadow-sm">
                                                 <Minus className="h-3 w-3" />
@@ -149,7 +149,7 @@ export default function POSPage() {
                     <div className="space-y-3 mb-5">
                         <div className="flex justify-between items-center text-sm text-gray-600">
                             <span>Subtotal</span>
-                            <span className="font-medium">${subtotal.toFixed(2)}</span>
+                            <span className="font-medium">${subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
 
                         <div className="flex justify-between items-center text-sm text-gray-600">
@@ -168,7 +168,7 @@ export default function POSPage() {
 
                         <div className="pt-3 border-t border-gray-200 border-dashed flex justify-between items-center">
                             <span className="text-base font-bold text-gray-900">Total</span>
-                            <span className="text-2xl font-black text-blue-600">${total.toFixed(2)}</span>
+                            <span className="text-2xl font-black text-blue-600">${total.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                     </div>
 

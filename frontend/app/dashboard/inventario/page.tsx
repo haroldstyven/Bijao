@@ -110,10 +110,10 @@ export default function InventarioPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="font-semibold text-blue-600 text-sm">${item.price.toFixed(2)}</span>
+                                        <span className="font-semibold text-blue-600 text-sm">${item.price.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-gray-600 text-sm">${item.cost.toFixed(2)}</span>
+                                        <span className="text-gray-600 text-sm">${item.cost.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-1.5">

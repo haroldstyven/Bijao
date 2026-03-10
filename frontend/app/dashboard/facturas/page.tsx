@@ -58,8 +58,8 @@ export default function FacturasPage() {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab
-                                    ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
-                                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100/50'
+                                ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
+                                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100/50'
                                 }`}
                         >
                             {tab}
@@ -114,7 +114,7 @@ export default function FacturasPage() {
                                         <span className="text-gray-600 text-sm bg-gray-100 px-2 py-1 rounded-md">{fac.items}</span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="font-bold text-gray-900 text-sm">${fac.total.toFixed(2)}</span>
+                                        <span className="font-bold text-gray-900 text-sm">${fac.total.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${fac.color}`}>

@@ -114,7 +114,7 @@ export default function ClientesPage() {
                                 <span className="text-xs text-gray-500 font-medium">Total Comprado</span>
                                 <div className="flex items-center gap-1">
                                     <TrendingUp className="h-4 w-4 text-green-500" />
-                                    <span className="text-lg font-black text-gray-900">${cliente.total.toLocaleString()}</span>
+                                    <span className="text-lg font-black text-gray-900">${cliente.total.toLocaleString('es-CO')}</span>
                                 </div>
                             </div>
                         </div>

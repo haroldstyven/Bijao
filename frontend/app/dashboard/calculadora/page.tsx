@@ -132,7 +132,7 @@ export default function CalculadoraPage() {
                             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-green-700 font-semibold uppercase tracking-wider mb-0.5">Precio de Venta Sugerido</p>
-                                    <p className="text-2xl font-black text-green-700">${resultPrice.toFixed(2)}</p>
+                                    <p className="text-2xl font-black text-green-700">${resultPrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                 </div>
                                 <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
                                     <ArrowRight className="h-5 w-5" />
@@ -199,11 +199,11 @@ export default function CalculadoraPage() {
                             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-blue-700 font-semibold uppercase tracking-wider mb-0.5">Margen Obtenido</p>
-                                    <p className="text-2xl font-black text-blue-700">{resultMargin.toFixed(2)}%</p>
+                                    <p className="text-2xl font-black text-blue-700">{resultMargin.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
                                     <span className="text-xs text-blue-600 font-medium">Ganancia Unitaria</span>
-                                    <span className="font-bold text-gray-900">${(parseFloat(price2) - parseFloat(cost2)).toFixed(2)}</span>
+                                    <span className="font-bold text-gray-900">${(parseFloat(price2) - parseFloat(cost2)).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
                         )}
