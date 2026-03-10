@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
-from models import UserAuth, NegocioUpdate, ProductoCreate, ProductoUpdate
+from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate
 
 app = FastAPI(title="Bijao API", version="1.0")
 
@@ -20,7 +20,7 @@ def read_root():
 
 # 2. Endpoint de Registro
 @app.post("/auth/registro")
-def registrar_usuario(user: UserAuth):
+def registrar_usuario(user: UserRegister):
     try:
         # Llama a Supabase para crear el usuario
         response = supabase.auth.sign_up({
@@ -63,7 +63,7 @@ def registrar_usuario(user: UserAuth):
 
 # 3. Endpoint de Login
 @app.post("/auth/login")
-def iniciar_sesion(user: UserAuth):
+def iniciar_sesion(user: UserLogin):
     try:
         # Llama a Supabase para verificar credenciales
         response = supabase.auth.sign_in_with_password({
