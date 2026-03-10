@@ -11,6 +11,8 @@ interface Cliente {
     celular?: string;
     cumpleanos?: string;
     negocio_id?: string;
+    n_compras?: number;
+    total_consumido?: number;
 }
 
 export default function ClientesPage() {
@@ -120,6 +122,24 @@ export default function ClientesPage() {
 
     const activeCustomers = clientes.length;
 
+    // Advanced Metrics
+    const totalRevenue = clientes.reduce((acc, c) => acc + (c.total_consumido || 0), 0);
+    const bestBuyer = clientes.length > 0 ? clientes.reduce((best, c) => ((c.total_consumido || 0) > (best.total_consumido || 0) ? c : best), clientes[0]) : null;
+
+    // Cumpleaños este mes
+    const getBirthdaysThisMonth = () => {
+        const currentMonth = new Date().getMonth() + 1;
+        return clientes.filter(c => {
+            if (!c.cumpleanos) return false;
+            const match = c.cumpleanos.split('-');
+            if (match.length >= 2) {
+                return parseInt(match[1], 10) === currentMonth;
+            }
+            return false;
+        }).length;
+    };
+    const upcomingBirthdays = getBirthdaysThisMonth();
+
     return (
         <div className="flex flex-col gap-6 max-w-7xl mx-auto">
             {/* Header */}
@@ -141,7 +161,7 @@ export default function ClientesPage() {
             </div>
 
             {/* Metrics cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Clientes</p>
@@ -149,6 +169,40 @@ export default function ClientesPage() {
                     </div>
                     <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                         <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Mejor Cliente</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-1 truncate max-w-[120px]" title={bestBuyer?.nombre || "Ninguno"}>
+                            {bestBuyer && (bestBuyer.total_consumido || 0) > 0 ? bestBuyer.nombre.split(' ')[0] : "N/A"}
+                        </h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                        <span className="text-amber-600 dark:text-amber-400 text-lg">⭐</span>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Consumido</p>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                            ${totalRevenue.toLocaleString('es-CO')}
+                        </h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                        <span className="text-emerald-600 dark:text-emerald-400 text-lg font-bold">$</span>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Cumples del Mes</p>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{upcomingBirthdays}</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-pink-500" />
                     </div>
                 </div>
             </div>
@@ -175,6 +229,7 @@ export default function ClientesPage() {
                             <tr className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">
                                 <th className="px-6 py-4">Cliente</th>
                                 <th className="px-6 py-4">Contacto</th>
+                                <th className="px-6 py-4">Historial</th>
                                 <th className="px-6 py-4">Cumpleaños</th>
                                 <th className="px-6 py-4 text-center">Acciones</th>
                             </tr>
@@ -224,10 +279,23 @@ export default function ClientesPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-300">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-medium text-gray-900 dark:text-white">{item.n_compras || 0}</span>
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">compras</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                                        ${(item.total_consumido || 0).toLocaleString('es-CO')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
                                                 {item.cumpleanos ? (
                                                     <>
-                                                        <Calendar className="h-3.5 w-3.5 text-pink-400" />
+                                                        <Calendar className="h-3.5 w-3.5 text-pink-400 shrink-0" />
                                                         <span>{item.cumpleanos}</span>
                                                     </>
                                                 ) : <span className="text-gray-400 italic">No especificado</span>}
