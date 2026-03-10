@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import Script from 'next/script';
 import {
     Plus, Download, Upload, Search, Edit, Trash2,
     Package, TrendingDown, TrendingUp, AlertCircle, X, Save, Loader2
@@ -95,24 +94,37 @@ export default function InventarioPage() {
         setToastMessage(null);
     };
 
-    const handleExport = () => {
+    const handleExport = async () => {
         if (productos.length === 0) {
             setToastMessage('No hay productos para exportar');
             return;
         }
 
-        // Use the global XLSX object loaded from the CDN script
-        const globalXLSX = (window as any).XLSX;
-        if (!globalXLSX) {
-            setToastMessage('La librería de Excel aún se está cargando, intenta de nuevo en un segundo.');
-            return;
-        }
+        try {
+            let globalXLSX = (window as any).XLSX;
+            if (!globalXLSX) {
+                setToastMessage('Cargando librería de Excel...');
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://unpkg.com/xlsx/dist/xlsx.full.min.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.body.appendChild(script);
+                });
+                globalXLSX = (window as any).XLSX;
+            }
 
-        const ws = globalXLSX.utils.json_to_sheet(productos);
-        const wb = globalXLSX.utils.book_new();
-        globalXLSX.utils.book_append_sheet(wb, ws, "Inventario");
-        globalXLSX.writeFile(wb, "Inventario_Bijao.xlsx");
-        setToastMessage("Inventario exportado exitosamente");
+            if (!globalXLSX) throw new Error("No se pudo cargar XLSX");
+
+            const ws = globalXLSX.utils.json_to_sheet(productos);
+            const wb = globalXLSX.utils.book_new();
+            globalXLSX.utils.book_append_sheet(wb, ws, "Inventario");
+            globalXLSX.writeFile(wb, "Inventario_Bijao.xlsx");
+            setToastMessage("Inventario exportado exitosamente");
+        } catch (e) {
+            console.error("Error al exportar:", e);
+            setToastMessage("Error al exportar, revisa tu conexión a internet.");
+        }
     };
 
     const handleImportClick = () => {
