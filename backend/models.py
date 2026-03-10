@@ -21,18 +21,21 @@ class NegocioUpdate(BaseModel):
 class ProductoCreate(BaseModel):
     nombre: str
     categoria: str
-    precio: float
+    precio_venta: float
     costo: float
-    stock: int
+    stock_actual: int
     stock_minimo: int
+    tipo: str = "PRODUCTO"
     imagen_url: Optional[str] = None
     negocio_id: Optional[str] = None
 
 class ProductoUpdate(BaseModel):
     nombre: Optional[str] = None
     categoria: Optional[str] = None
-    precio: Optional[float] = None
+    precio_venta: Optional[float] = None
     costo: Optional[float] = None
-    stock: Optional[int] = None
+    stock_actual: Optional[int] = None
     stock_minimo: Optional[int] = None
+    tipo: Optional[str] = None
     imagen_url: Optional[str] = None
+    is_active: Optional[bool] = None

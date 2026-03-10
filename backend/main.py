@@ -138,7 +138,7 @@ def crear_producto(producto: ProductoCreate):
 @app.get("/api/inventario/{negocio_id}")
 def obtener_productos(negocio_id: str):
     try:
-        productos_db = supabase.table("productos").select("*").eq("negocio_id", negocio_id).execute()
+        productos_db = supabase.table("productos").select("*").eq("negocio_id", negocio_id).order("created_at", desc=True).execute()
         return {"data": productos_db.data}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

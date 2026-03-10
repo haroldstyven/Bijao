@@ -11,10 +11,11 @@ interface Producto {
     id: string;
     nombre: string;
     categoria: string;
-    precio: number;
+    precio_venta: number;
     costo: number;
-    stock: number;
+    stock_actual: number;
     stock_minimo: number;
+    tipo: string;
     imagen_url?: string;
     negocio_id?: string;
 }
@@ -66,9 +67,9 @@ export default function InventarioPage() {
             setEditingProduct(product);
             setNombre(product.nombre);
             setCategoria(product.categoria);
-            setPrecio(product.precio.toString());
+            setPrecio(product.precio_venta.toString());
             setCosto(product.costo.toString());
-            setStock(product.stock.toString());
+            setStock(product.stock_actual.toString());
             setStockMinimo(product.stock_minimo.toString());
         } else {
             setEditingProduct(null);
@@ -95,10 +96,11 @@ export default function InventarioPage() {
             const data = {
                 nombre,
                 categoria: categoria || 'General',
-                precio: parseFloat(precio) || 0,
+                precio_venta: parseFloat(precio) || 0,
                 costo: parseFloat(costo) || 0,
-                stock: parseInt(stock, 10) || 0,
+                stock_actual: parseInt(stock, 10) || 0,
                 stock_minimo: parseInt(stockMinimo, 10) || 0,
+                tipo: 'PRODUCTO',
                 negocio_id: businessId
             };
             if (editingProduct) {
@@ -138,8 +140,8 @@ export default function InventarioPage() {
         const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCat = categoryFilter === 'Todas las Categorías' || p.categoria === categoryFilter;
         let matchesStatus = true;
-        if (statusFilter === 'Stock Bajo') matchesStatus = p.stock <= p.stock_minimo;
-        else if (statusFilter === 'En Stock') matchesStatus = p.stock > p.stock_minimo;
+        if (statusFilter === 'Stock Bajo') matchesStatus = p.stock_actual <= p.stock_minimo;
+        else if (statusFilter === 'En Stock') matchesStatus = p.stock_actual > p.stock_minimo;
         return matchesSearch && matchesCat && matchesStatus;
     });
 
@@ -235,7 +237,7 @@ export default function InventarioPage() {
                                 </tr>
                             ) : (
                                 filteredProducts.map((item) => {
-                                    const margin = calculateMargin(item.precio, item.costo);
+                                    const margin = calculateMargin(item.precio_venta, item.costo);
                                     return (
                                         <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/50 transition-colors group">
                                             <td className="px-6 py-4">
@@ -250,7 +252,7 @@ export default function InventarioPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="font-semibold text-blue-600 dark:text-blue-400 text-sm">${item.precio.toLocaleString('es-CO')}</span>
+                                                <span className="font-semibold text-blue-600 dark:text-blue-400 text-sm">${item.precio_venta.toLocaleString('es-CO')}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-gray-600 dark:text-gray-300 text-sm">${item.costo.toLocaleString('es-CO')}</span>
@@ -271,14 +273,14 @@ export default function InventarioPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {item.stock <= item.stock_minimo ? (
+                                                {item.stock_actual <= item.stock_minimo ? (
                                                     <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold text-sm bg-red-50 dark:bg-red-900/20 w-fit px-2 py-1 rounded-md border border-red-100 dark:border-red-800/30">
                                                         <AlertCircle className="h-4 w-4" />
-                                                        {item.stock} uds
+                                                        {item.stock_actual} uds
                                                     </div>
                                                 ) : (
                                                     <div className="text-gray-900 dark:text-white font-medium text-sm">
-                                                        {item.stock} uds
+                                                        {item.stock_actual} uds
                                                     </div>
                                                 )}
                                             </td>
