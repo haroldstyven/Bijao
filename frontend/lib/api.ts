@@ -254,3 +254,8 @@ export const getMarketingSugerencias = async (negocio_id: string) => {
   const res = await fetch(`${API_URL}/api/marketing/sugerencias/${negocio_id}`, { headers: getAuthHeaders() });
   return handleResponse(res);
 };
+
+export const getMarketingSegmentos = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/marketing/segmentos/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};

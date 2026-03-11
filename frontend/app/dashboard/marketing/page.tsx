@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     Megaphone, Users, Sparkles, Zap, Target, ArrowRight, TrendingDown,
-    TrendingUp, Mail, Plus, X, Loader2, Trash2, CheckCircle, BarChart3, Presentation
+    TrendingUp, Mail, Plus, X, Loader2, Trash2, CheckCircle, BarChart3, Presentation, ChevronDown, ChevronUp, UserCheck
 } from 'lucide-react';
-import { getCampanas, createCampana, deleteCampana, getMarketingInsights, getMarketingSugerencias, getProductos } from '@/lib/api';
+import { getCampanas, createCampana, deleteCampana, getMarketingInsights, getMarketingSugerencias, getProductos, getMarketingSegmentos } from '@/lib/api';
 
 export default function MarketingPage() {
     const [activeTab, setActiveTab] = useState('Campañas');
@@ -16,6 +16,8 @@ export default function MarketingPage() {
     const [sugerencias, setSugerencias] = useState<any[]>([]);
     const [insights, setInsights] = useState<any[]>([]);
     const [productos, setProductos] = useState<any[]>([]);
+    const [segmentos, setSegmentos] = useState<any[]>([]);
+    const [segmentoAbierto, setSegmentoAbierto] = useState<number | null>(0); // by default open the first
 
     // UI states
     const [isCreating, setIsCreating] = useState(false);
@@ -38,17 +40,19 @@ export default function MarketingPage() {
             const negocio_id = localStorage.getItem('negocio_id');
             if (!negocio_id) return;
 
-            const [campanasRes, sugerenciasRes, insightsRes, productosRes] = await Promise.all([
+            const [campanasRes, sugerenciasRes, insightsRes, productosRes, segmentosRes] = await Promise.all([
                 getCampanas(negocio_id),
                 getMarketingSugerencias(negocio_id),
                 getMarketingInsights(negocio_id),
-                getProductos(negocio_id)
+                getProductos(negocio_id),
+                getMarketingSegmentos(negocio_id)
             ]);
 
             setCampanas(campanasRes.data || []);
             setSugerencias(sugerenciasRes.data || []);
             setInsights(insightsRes.data || []);
             setProductos(productosRes.data || []);
+            setSegmentos(segmentosRes.data || []);
 
         } catch (error) {
             console.error("Error fetching marketing data:", error);
@@ -279,11 +283,18 @@ export default function MarketingPage() {
                                 <p className="text-sm text-gray-500 ml-2 border-l border-gray-200 pl-4 hidden md:block">Traducción de tus métricas a lenguaje de negocio.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {insights.map((ins: any) => (
-                                    <div key={ins.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center justify-center h-48 hover:shadow-md transition-shadow">
-                                        <span className={`text-4xl font-black tracking-tighter mb-2 ${ins.color.split(' ')[0]}`}>{ins.percentage}%</span>
-                                        <h3 className="font-bold text-gray-800 text-base">{ins.title}</h3>
+                                    <div key={ins.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
+                                        <div>
+                                            <h3 className="font-bold text-gray-500 uppercase tracking-wider text-xs mb-3">{ins.title}</h3>
+                                            <div className="flex items-baseline gap-2 mb-2">
+                                                <span className={`text-3xl font-black tracking-tight ${ins.color.split(' ')[0]}`}>{ins.value}</span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t border-gray-50">
+                                            <p className="text-sm font-medium text-gray-700 leading-snug">{ins.desc}</p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -294,13 +305,66 @@ export default function MarketingPage() {
                         <div className="flex flex-col gap-6">
                             <div className="flex items-center gap-2 mb-2">
                                 <Users className="h-6 w-6 text-gray-700" />
-                                <h2 className="text-xl font-bold text-gray-900">Agrupador de Usuarios</h2>
+                                <h2 className="text-xl font-bold text-gray-900">Segmentación por Preferencia de Compra</h2>
                             </div>
-                            <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center text-gray-500">
-                                <Presentation className="h-10 w-10 mx-auto text-gray-300 mb-3" />
-                                <p className="font-medium text-gray-700">Módulo de segmentación en desarrollo</p>
-                                <p className="text-sm mt-1">Próximamente podrás crear segmentos de clientes basados en filtros avanzados.</p>
-                            </div>
+
+                            {segmentos.length === 0 ? (
+                                <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center text-gray-500">
+                                    <Presentation className="h-10 w-10 mx-auto text-gray-300 mb-3" />
+                                    <p className="font-medium text-gray-700">No hay suficientes datos</p>
+                                    <p className="text-sm mt-1">Registra más ventas para que el algoritmo pueda segmentar a tus clientes.</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-4">
+                                    {segmentos.map((seg, idx) => (
+                                        <div key={idx} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                            {/* Header del Acordeón */}
+                                            <button
+                                                onClick={() => setSegmentoAbierto(segmentoAbierto === idx ? null : idx)}
+                                                className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors text-left"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl ${seg.color}`}>
+                                                        <Target className="h-6 w-6" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-900 text-lg">{seg.segmento}</h3>
+                                                        <p className="text-sm text-gray-500 font-medium">
+                                                            Total: {seg.total_clientes} {seg.total_clientes === 1 ? 'cliente' : 'clientes'} ({seg.porcentaje}%)
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-gray-400">
+                                                    {segmentoAbierto === idx ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
+                                                </div>
+                                            </button>
+
+                                            {/* Contenido (Clientes) */}
+                                            {segmentoAbierto === idx && (
+                                                <div className="border-t border-gray-100 bg-gray-50 p-6">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {seg.clientes.map((cliente: any, cIdx: number) => (
+                                                            <div key={cIdx} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-start gap-3 hover:border-blue-200 transition-colors">
+                                                                <div className="bg-blue-100 text-blue-600 rounded-full p-2 mt-1 shrink-0">
+                                                                    <UserCheck className="h-4 w-4" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-gray-900 leading-tight">{cliente.nombre}</p>
+                                                                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                                                                        <p><span className="font-semibold text-gray-700">Compras:</span> {cliente.compras}</p>
+                                                                        <p><span className="font-semibold text-gray-700">Gastado:</span> ${cliente.total_gastado.toLocaleString('es-CO')}</p>
+                                                                        <p><span className="font-semibold text-gray-700">Última Compra:</span> {cliente.ultima_compra}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </>

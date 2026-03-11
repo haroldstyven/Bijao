@@ -382,6 +382,24 @@ def crear_venta(venta: VentaCreate, current_user = Depends(get_current_user)):
                     "total_consumido": consumo_previo + float(venta.total)
                 }).eq("id", venta.cliente_id).execute()
 
+        try:
+            campanas_activas = supabase.table("campanas_marketing").select("*").eq("negocio_id", venta.negocio_id).eq("estado", "ACTIVA").execute()
+            if campanas_activas.data:
+                for camp in campanas_activas.data:
+                    incrementar = False
+                    
+                    if camp.get("producto_id"):
+                        if any(str(d.producto_id) == str(camp["producto_id"]) for d in venta.detalles):
+                            incrementar = True
+                    else:
+                        incrementar = True
+                        
+                    if incrementar:
+                        nuevo_avance = int(camp.get("avance_actual", 0) or 0) + 1
+                        supabase.table("campanas_marketing").update({"avance_actual": nuevo_avance}).eq("id", camp["id"]).execute()
+        except Exception as msg_error:
+            print(f"[CAMPANAS MARKETING TRACKING ERROR] {str(msg_error)}")
+
         return {"mensaje": "Venta registrada exitosamente", "venta_id": venta_id}
         
     except HTTPException:
@@ -598,27 +616,205 @@ def eliminar_campana(campana_id: str, current_user = Depends(get_current_user)):
 @app.get("/api/marketing/insights/{negocio_id}")
 def obtener_insights(negocio_id: str, current_user = Depends(verificar_acceso_negocio)):
     try:
-        ventas_db = supabase.table("ventas").select("total, cliente_id").eq("negocio_id", negocio_id).execute()
-        
         insights = [
-            {"id": 1, "title": "Prefieren Servicios o Productos Altamente Rentables", "percentage": 15, "color": "text-purple-600 bg-purple-50 border-purple-100"},
-            {"id": 2, "title": "Clientes Recurrentes Frecuentes", "percentage": 0, "color": "text-blue-600 bg-blue-50 border-blue-100"},
-            {"id": 3, "title": "En Riesgo de Abandono (Churn)", "percentage": 10, "color": "text-red-600 bg-red-50 border-red-100"}
+            {"id": 1, "title": "Cliente más recurrente", "value": "N/A", "percentage": "", "desc": "Sin datos suficientes", "color": "text-blue-600 bg-blue-50 border-blue-100"},
+            {"id": 2, "title": "Producto más repetido", "value": "N/A", "percentage": "", "desc": "Sin datos suficientes", "color": "text-purple-600 bg-purple-50 border-purple-100"},
+            {"id": 3, "title": "Rentabilidad real", "value": "0%", "percentage": "0%", "desc": "De cada $100 que vendes, te quedan $0", "color": "text-emerald-600 bg-emerald-50 border-emerald-100"},
+            {"id": 4, "title": "Riesgo de quiebre", "value": "N/A", "percentage": "", "desc": "Sin alertas de stock actuales", "color": "text-red-600 bg-red-50 border-red-100"},
+            {"id": 5, "title": "Ticket promedio", "value": "$0", "percentage": "", "desc": "Cada cliente gasta en promedio $0", "color": "text-amber-600 bg-amber-50 border-amber-100"}
         ]
-         
-        if ventas_db.data:
-            df = pd.DataFrame(ventas_db.data)
-            if 'cliente_id' in df.columns:
-                conteo_clientes = df['cliente_id'].dropna().value_counts()
-                recurrentes = (conteo_clientes > 1).sum()
-                total_unicos = df['cliente_id'].dropna().nunique()
+        
+        clientes_db = supabase.table("clientes").select("id, nombre, n_compras").eq("negocio_id", negocio_id).execute()
+        ventas_db = supabase.table("ventas").select("id, total, fecha_emision, cliente_id").eq("negocio_id", negocio_id).execute()
+        
+        if not ventas_db.data:
+            return {"data": insights}
+        
+        df_ventas = pd.DataFrame(ventas_db.data)
+        df_clientes = pd.DataFrame(clientes_db.data) if clientes_db.data else pd.DataFrame()
+        
+        if not df_clientes.empty and 'n_compras' in df_clientes.columns:
+            df_clientes['n_compras'] = pd.to_numeric(df_clientes['n_compras']).fillna(0)
+            avg_compras = max(df_clientes['n_compras'].mean(), 1)
+            top_cliente = df_clientes.loc[df_clientes['n_compras'].idxmax()]
+            if top_cliente['n_compras'] > 0:
+                mult = round(top_cliente['n_compras'] / avg_compras, 1)
+                insights[0]["value"] = top_cliente["nombre"]
+                insights[0]["desc"] = f"Compra {mult}x más que el promedio ({int(top_cliente['n_compras'])} compras)"
                 
-                if total_unicos > 0:
-                    insights[1]["percentage"] = int((recurrentes / total_unicos) * 100)
+        ticket_promedio = df_ventas['total'].mean()
+        insights[4]["value"] = f"${ticket_promedio:,.0f}" if pd.notna(ticket_promedio) else "$0"
+        insights[4]["desc"] = f"Cada compra promedia ${ticket_promedio:,.0f}" if pd.notna(ticket_promedio) else "Cada compra promedia $0"
+
+        venta_ids = df_ventas['id'].tolist()
+        detalles_data = []
+        for i in range(0, len(venta_ids), 100):
+            chunk = venta_ids[i:i+100]
+            res = supabase.table("venta_detalles").select("venta_id, producto_id, cantidad, precio_unitario, costo_unitario").in_("venta_id", chunk).execute()
+            if res.data:
+                detalles_data.extend(res.data)
                 
+        if detalles_data:
+            df_det = pd.DataFrame(detalles_data)
+            
+            df_det['ingreso'] = df_det['cantidad'] * df_det['precio_unitario']
+            df_det['costo_total'] = df_det['cantidad'] * df_det['costo_unitario']
+            total_ingreso = df_det['ingreso'].sum()
+            total_costo = df_det['costo_total'].sum()
+            
+            if total_ingreso > 0:
+                rentabilidad = ((total_ingreso - total_costo) / total_ingreso) * 100
+                rentabilidad_int = int(rentabilidad)
+                insights[2]["value"] = f"{rentabilidad_int}%"
+                insights[2]["desc"] = f"De cada $100 que vendes, te quedan ${rentabilidad_int} antes de gastos"
+
+            productos_db = supabase.table("productos").select("id, nombre, stock_actual").eq("negocio_id", negocio_id).execute()
+            df_prod = pd.DataFrame(productos_db.data) if productos_db.data else pd.DataFrame()
+            
+            if not df_prod.empty:
+                df_merged = df_det.merge(df_prod, left_on='producto_id', right_on='id')
+                if not df_merged.empty:
+                    prod_counts = df_merged.groupby('nombre')['cantidad'].sum().reset_index()
+                    top_prod = prod_counts.loc[prod_counts['cantidad'].idxmax()]
+                    total_sold_units = prod_counts['cantidad'].sum()
+                    porcentaje_pref = int((top_prod['cantidad'] / total_sold_units) * 100) if total_sold_units > 0 else 0
+                    
+                    insights[1]["value"] = top_prod['nombre']
+                    insights[1]["desc"] = f"Representa el {porcentaje_pref}% del volumen total vendido"
+
+                df_det_ventas = df_det.merge(df_ventas[['id', 'fecha_emision']], left_on='venta_id', right_on='id')
+                df_det_ventas['fecha_emision'] = pd.to_datetime(df_det_ventas['fecha_emision'], errors='coerce')
+                
+                if df_det_ventas['fecha_emision'].dt.tz is None:
+                    df_det_ventas['fecha_emision'] = df_det_ventas['fecha_emision'].dt.tz_localize('UTC')
+                
+                now = datetime.now(pytz.utc)
+                thirty_days_ago = now - pd.Timedelta(days=30)
+                
+                recent_sales = df_det_ventas[df_det_ventas['fecha_emision'] >= thirty_days_ago]
+                if not recent_sales.empty:
+                    velocity = recent_sales.groupby('producto_id')['cantidad'].sum().reset_index()
+                    velocity.rename(columns={'cantidad': 'sold_30d'}, inplace=True)
+                    
+                    df_risk = df_prod.merge(velocity, left_on='id', right_on='producto_id', how='left')
+                    df_risk['sold_30d'] = df_risk['sold_30d'].fillna(0)
+                    df_risk['stock_actual'] = pd.to_numeric(df_risk['stock_actual']).fillna(0)
+                    
+                    df_risk = df_risk[df_risk['sold_30d'] > 0]
+                    
+                    if not df_risk.empty:
+                        df_risk['daily_velocity'] = df_risk['sold_30d'] / 30.0
+                        df_risk['days_coverage'] = df_risk['stock_actual'] / df_risk['daily_velocity']
+                        
+                        top_risk = df_risk.loc[df_risk['days_coverage'].idxmin()]
+                        days_left = int(top_risk['days_coverage'])
+                        
+                        if days_left <= 14:
+                            risk_level = "Alto" if days_left <= 7 else "Medio"
+                        else:
+                            risk_level = "Bajo"
+                            
+                        insights[3]["value"] = risk_level
+                        insights[3]["desc"] = f"'{top_risk['nombre']}' — Stock actual cubre solo {days_left} días"
+
         return {"data": insights}
     except Exception as e:
         print(f"[INSIGHTS ERROR] {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 29. Segmentación de Clientes
+@app.get("/api/marketing/segmentos/{negocio_id}")
+def obtener_segmentos(negocio_id: str, current_user = Depends(verificar_acceso_negocio)):
+    try:
+        ventas_db = supabase.table("ventas").select("id, cliente_id, total, fecha_emision").eq("negocio_id", negocio_id).execute()
+        clientes_db = supabase.table("clientes").select("id, nombre").eq("negocio_id", negocio_id).execute()
+        productos_db = supabase.table("productos").select("id, categoria").eq("negocio_id", negocio_id).execute()
+        
+        if not ventas_db.data or not clientes_db.data:
+            return {"data": []}
+            
+        df_ventas = pd.DataFrame(ventas_db.data)
+        df_clientes = pd.DataFrame(clientes_db.data)
+        df_prod = pd.DataFrame(productos_db.data) if productos_db.data else pd.DataFrame()
+        
+        df_ventas = df_ventas.dropna(subset=['cliente_id'])
+        if df_ventas.empty:
+            return {"data": []}
+            
+        venta_ids = df_ventas['id'].tolist()
+        detalles_data = []
+        for i in range(0, len(venta_ids), 100):
+            chunk = venta_ids[i:i+100]
+            res = supabase.table("venta_detalles").select("venta_id, producto_id, cantidad, precio_unitario").in_("venta_id", chunk).execute()
+            if res.data:
+                detalles_data.extend(res.data)
+                
+        if not detalles_data or df_prod.empty:
+            return {"data": []}
+            
+        df_det = pd.DataFrame(detalles_data)
+        df_merged = df_det.merge(df_prod, left_on='producto_id', right_on='id', how='left')
+        df_merged['categoria'] = df_merged['categoria'].fillna('General')
+        
+        df_full = df_merged.merge(df_ventas, left_on='venta_id', right_on='id')
+        
+        client_cats = df_full.groupby(['cliente_id', 'categoria'])['cantidad'].sum().reset_index()
+        idx = client_cats.groupby('cliente_id')['cantidad'].idxmax()
+        pref_cats = client_cats.loc[idx]
+        
+        client_stats = df_ventas.groupby('cliente_id').agg(
+            total_gastado=('total', 'sum'),
+            compras=('id', 'count'),
+            ultima_compra=('fecha_emision', 'max')
+        ).reset_index()
+        
+        final_df = pref_cats.merge(client_stats, on='cliente_id').merge(df_clientes, left_on='cliente_id', right_on='id')
+        
+        resultados = []
+        total_clientes = len(final_df)
+        
+        # Helper dictionary to add colors and icons to the frontend
+        colors = [
+            'text-purple-600 bg-purple-50 border-purple-100',
+            'text-blue-600 bg-blue-50 border-blue-100',
+            'text-amber-600 bg-amber-50 border-amber-100',
+            'text-emerald-600 bg-emerald-50 border-emerald-100',
+            'text-pink-600 bg-pink-50 border-pink-100',
+        ]
+        
+        color_idx = 0
+        for name, group in final_df.groupby('categoria'):
+            porcentaje = int((len(group) / total_clientes) * 100) if total_clientes > 0 else 0
+            
+            clientes_agrupados = []
+            for _, c in group.iterrows():
+                try:
+                    fecha = pd.to_datetime(c['ultima_compra']).strftime('%Y-%m-%d')
+                except:
+                    fecha = 'N/A'
+                clientes_agrupados.append({
+                    "nombre": c['nombre'],
+                    "compras": int(c['compras']),
+                    "total_gastado": float(c['total_gastado']),
+                    "ultima_compra": fecha
+                })
+                
+            clientes_agrupados = sorted(clientes_agrupados, key=lambda x: x['total_gastado'], reverse=True)
+            
+            resultados.append({
+                "segmento": f"Prefiere: {name}",
+                "total_clientes": len(group),
+                "porcentaje": porcentaje,
+                "color": colors[color_idx % len(colors)],
+                "clientes": clientes_agrupados
+            })
+            color_idx += 1
+            
+        resultados = sorted(resultados, key=lambda x: x['porcentaje'], reverse=True)
+        return {"data": resultados}
+        
+    except Exception as e:
+        print(f"[SEGMENTOS ERROR] {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 # 28. Campañas Sugeridas IA
