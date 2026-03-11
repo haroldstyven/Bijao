@@ -21,6 +21,13 @@ app.add_middleware(
 # Configuración de Seguridad
 security = HTTPBearer()
 
+class CurrentUser:
+    def __init__(self, user_id, email, negocio_id, rol):
+        self.id = user_id
+        self.email = email
+        self.negocio_id = negocio_id
+        self.rol = rol
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
@@ -33,16 +40,16 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         # Verificar el negocio del usuario
         usuario_db = supabase.table("usuarios").select("negocio_id, rol").eq("id", user_id).execute()
         
-        user_info = user_response.user
         if usuario_db.data:
-            setattr(user_info, 'negocio_id', usuario_db.data[0].get("negocio_id"))
-            setattr(user_info, 'rol', usuario_db.data[0].get("rol"))
+            negocio_id = usuario_db.data[0].get("negocio_id")
+            rol = usuario_db.data[0].get("rol")
         else:
-            setattr(user_info, 'negocio_id', None)
-            setattr(user_info, 'rol', 'CAJERO')
+            negocio_id = None
+            rol = 'CAJERO'
             
-        return user_info
+        return CurrentUser(user_id=user_id, email=user_response.user.email, negocio_id=negocio_id, rol=rol)
     except Exception as e:
+        print(f"[AUTH ERROR] {str(e)}")
         raise HTTPException(status_code=401, detail=f"No autenticado: {str(e)}")
 
 def verificar_acceso_negocio(negocio_id: str, current_user = Depends(get_current_user)):
