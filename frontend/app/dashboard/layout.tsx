@@ -32,6 +32,13 @@ export default function DashboardLayout({
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // Validación de Seguridad
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
         const fetchNegocio = async () => {
             const negocioId = localStorage.getItem('negocio_id');
             if (negocioId) {

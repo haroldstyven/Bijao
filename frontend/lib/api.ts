@@ -1,5 +1,33 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+const getAuthHeaders = (isFormData = false) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  const headers: Record<string, string> = {};
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
+const handleResponse = async (res: Response) => {
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('negocio_id');
+      window.location.href = '/login';
+    }
+    throw new Error('Sesión expirada o inválida. Por favor, inicia sesión nuevamente.');
+  }
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData?.detail || 'Ocurrió un error en la solicitud');
+  }
+  return res.json();
+};
+
 export async function loginUser(data: any) {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -45,59 +73,48 @@ export async function registerUser(data: any) {
 }
 
 export const getNegocio = async (negocio_id: string) => {
-  const res = await fetch(`${API_URL}/api/negocios/${negocio_id}`);
-  if (!res.ok) throw new Error('Error al obtener el negocio');
-  return res.json();
+  const res = await fetch(`${API_URL}/api/negocios/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
 };
 
 export const updateNegocio = async (negocio_id: string, data: any) => {
   const res = await fetch(`${API_URL}/api/negocios/${negocio_id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Error al actualizar el negocio');
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getProductos = async (negocio_id: string) => {
-  const res = await fetch(`${API_URL}/api/inventario/${negocio_id}`);
-  if (!res.ok) throw new Error('Error al obtener los productos');
-  return res.json();
+  const res = await fetch(`${API_URL}/api/inventario/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
 };
 
 export const createProducto = async (data: any) => {
   const res = await fetch(`${API_URL}/api/inventario`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Error al crear el producto');
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
 export const updateProducto = async (producto_id: string, data: any) => {
   const res = await fetch(`${API_URL}/api/inventario/${producto_id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Error al actualizar el producto');
-  return res.json();
+  return handleResponse(res);
 };
 
 export const deleteProducto = async (producto_id: string) => {
   const res = await fetch(`${API_URL}/api/inventario/${producto_id}`, {
     method: 'DELETE',
+    headers: getAuthHeaders()
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Error al eliminar el producto');
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
 export const importarProductos = async (negocio_id: string, file: File) => {
@@ -106,112 +123,86 @@ export const importarProductos = async (negocio_id: string, file: File) => {
 
   const res = await fetch(`${API_URL}/api/inventario/${negocio_id}/importar`, {
     method: 'POST',
+    headers: getAuthHeaders(true),
     body: formData,
-    // No headers for Content-Type when using FormData, fetch sets the boundary automatically
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Error al importar productos');
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getClientes = async (negocio_id: string) => {
-  const res = await fetch(`${API_URL}/api/clientes/${negocio_id}`);
-  if (!res.ok) throw new Error('Error al obtener los clientes');
-  return res.json();
+  const res = await fetch(`${API_URL}/api/clientes/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
 };
 
 export const createCliente = async (data: any) => {
   const res = await fetch(`${API_URL}/api/clientes`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Error al crear el cliente');
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
 export const updateCliente = async (cliente_id: string, data: any) => {
   const res = await fetch(`${API_URL}/api/clientes/${cliente_id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Error al actualizar el cliente');
-  return res.json();
+  return handleResponse(res);
 };
 
 export const deleteCliente = async (cliente_id: string) => {
   const res = await fetch(`${API_URL}/api/clientes/${cliente_id}`, {
     method: 'DELETE',
+    headers: getAuthHeaders()
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Error al eliminar el cliente');
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
 export const createVenta = async (data: any) => {
   const res = await fetch(`${API_URL}/api/ventas`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Error al procesar la venta');
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getVentas = async (negocio_id: string) => {
-  const res = await fetch(`${API_URL}/api/ventas/${negocio_id}`);
-  if (!res.ok) throw new Error('Error al obtener el historial de ventas');
-  return res.json();
+  const res = await fetch(`${API_URL}/api/ventas/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
 };
 
 export const getVentaDetalles = async (venta_id: string) => {
-  const res = await fetch(`${API_URL}/api/ventas/detalle/${venta_id}`);
-  if (!res.ok) throw new Error('Error al obtener los detalles de la venta');
-  return res.json();
+  const res = await fetch(`${API_URL}/api/ventas/detalle/${venta_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
 };
 
 export const createCotizacion = async (data: any) => {
   const res = await fetch(`${API_URL}/api/cotizaciones`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'Error al crear la cotización');
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getCotizaciones = async (negocio_id: string) => {
-  const res = await fetch(`${API_URL}/api/cotizaciones/${negocio_id}`);
-  if (!res.ok) throw new Error('Error al obtener el historial de cotizaciones');
-  return res.json();
+  const res = await fetch(`${API_URL}/api/cotizaciones/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
 };
 
 export const getCotizacionDetalles = async (cotizacion_id: string) => {
-  const res = await fetch(`${API_URL}/api/cotizaciones/detalle/${cotizacion_id}`);
-  if (!res.ok) throw new Error('Error al obtener los detalles de la cotización');
-  return res.json();
+  const res = await fetch(`${API_URL}/api/cotizaciones/detalle/${cotizacion_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
 };
 
 export const updateCotizacionEstado = async (cotizacion_id: string, estado: string) => {
   const res = await fetch(`${API_URL}/api/cotizaciones/${cotizacion_id}/estado`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ estado }),
   });
-  if (!res.ok) throw new Error('Error al actualizar el estado de la cotización');
-  return res.json();
+  return handleResponse(res);
 };
