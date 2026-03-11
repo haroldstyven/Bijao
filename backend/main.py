@@ -6,6 +6,8 @@ from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, Produ
 import pandas as pd
 import io
 import math
+from datetime import datetime
+import pytz
 
 app = FastAPI(title="Bijao API", version="1.0")
 
@@ -477,5 +479,72 @@ def actualizar_estado_cotizacion(cotizacion_id: str, cotizacion: CotizacionUpdat
         result = supabase.table("cotizaciones").update({"estado": cotizacion.estado}).eq("id", cotizacion_id).execute()
         return {"mensaje": f"Cotización marcada como {cotizacion.estado}", "data": result.data}
     except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# --- MÓDULO DE DASHBOARD / MÉTRICAS ---
+
+# 22. Obtener Metricas del Dashboard (Privado)
+@app.get("/api/metricas/{negocio_id}")
+def obtener_metricas(negocio_id: str, current_user = Depends(verificar_acceso_negocio)):
+    try:
+        ventas_db = supabase.table("ventas").select("total, fecha_emision").eq("negocio_id", negocio_id).execute()
+        
+        clientes_db = supabase.table("clientes").select("id").eq("negocio_id", negocio_id).execute()
+        total_clientes = len(clientes_db.data) if clientes_db.data else 0
+        
+        ventas_hoy = 0.0
+        ventas_mes = 0.0
+        ticket_promedio = 0.0
+        grafico = []
+        
+        # Precompletar grafica con dias de la semana para asegurar estructura
+        nombres_dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+        bogota_tz = pytz.timezone('America/Bogota')
+        now = datetime.now(bogota_tz)
+        
+        for i in range(6, -1, -1):
+            dia_obj = (now - pd.Timedelta(days=i)).date()
+            grafico.append({
+                "day": nombres_dias[dia_obj.weekday()], 
+                "val": 0.0,
+                "date": str(dia_obj)
+            })
+
+        if ventas_db.data:
+            df = pd.DataFrame(ventas_db.data)
+            df['fecha_emision'] = pd.to_datetime(df['fecha_emision'], errors='coerce')
+            
+            if df['fecha_emision'].dt.tz is None:
+                df['fecha_emision'] = df['fecha_emision'].dt.tz_localize('UTC')
+            df['fecha_emision'] = df['fecha_emision'].dt.tz_convert('America/Bogota')
+            
+            # Filtros temporales
+            hoy = df[df['fecha_emision'].dt.date == now.date()]
+            ventas_hoy = float(hoy['total'].sum())
+            
+            mes = df[(df['fecha_emision'].dt.year == now.year) & (df['fecha_emision'].dt.month == now.month)]
+            ventas_mes = float(mes['total'].sum())
+            ticket_promedio = float(mes['total'].mean()) if not mes.empty else 0.0
+            
+            # Popular la data en el grafico
+            for item in grafico:
+                dia_data = df[df['fecha_emision'].dt.date == pd.to_datetime(item["date"]).date()]
+                item["val"] = float(dia_data['total'].sum())
+                
+        # Calcular los porcentajes relativos para el frontend
+        max_val = max([g["val"] for g in grafico]) if grafico else 0
+        for g in grafico:
+            g["percent"] = (g["val"] / max_val * 100) if max_val > 0 else 0
+            
+        return {
+            "ventas_hoy": ventas_hoy,
+            "ventas_mes": ventas_mes,
+            "ticket_promedio": ticket_promedio,
+            "clientes_activos": total_clientes,
+            "grafico": grafico
+        }
+        
+    except Exception as e:
+        print(f"[METRICAS ERROR] {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 

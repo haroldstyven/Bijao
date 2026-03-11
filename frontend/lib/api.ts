@@ -206,3 +206,8 @@ export const updateCotizacionEstado = async (cotizacion_id: string, estado: stri
   });
   return handleResponse(res);
 };
+
+export const getMetricas = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/metricas/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
