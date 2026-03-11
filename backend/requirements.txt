@@ -30,6 +30,7 @@ openpyxl==3.1.5
 packaging==26.0
 pandas==3.0.1
 postgrest==2.28.0
+pytz==2024.1
 propcache==0.4.1
 pycparser==3.0
 pydantic==2.12.5
