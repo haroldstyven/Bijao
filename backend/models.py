@@ -70,3 +70,23 @@ class VentaCreate(BaseModel):
     total: float
     estado: Optional[str] = "VIGENTE"
     detalles: list[VentaDetalleCreate]
+
+class CotizacionDetalleCreate(BaseModel):
+    producto_id: str
+    cantidad: float
+    precio_unitario: float
+    costo_unitario: float
+    descuento_item: Optional[float] = 0.00
+
+class CotizacionCreate(BaseModel):
+    negocio_id: str
+    cliente_id: Optional[str] = None
+    numero_cotizacion: str
+    subtotal: float
+    descuento_global: Optional[float] = 0.00
+    total: float
+    estado: Optional[str] = "PENDIENTE"
+    detalles: list[CotizacionDetalleCreate]
+
+class CotizacionUpdate(BaseModel):
+    estado: str

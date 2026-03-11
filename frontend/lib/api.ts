@@ -180,3 +180,38 @@ export const getVentaDetalles = async (venta_id: string) => {
   if (!res.ok) throw new Error('Error al obtener los detalles de la venta');
   return res.json();
 };
+
+export const createCotizacion = async (data: any) => {
+  const res = await fetch(`${API_URL}/api/cotizaciones`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Error al crear la cotización');
+  }
+  return res.json();
+};
+
+export const getCotizaciones = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/cotizaciones/${negocio_id}`);
+  if (!res.ok) throw new Error('Error al obtener el historial de cotizaciones');
+  return res.json();
+};
+
+export const getCotizacionDetalles = async (cotizacion_id: string) => {
+  const res = await fetch(`${API_URL}/api/cotizaciones/detalle/${cotizacion_id}`);
+  if (!res.ok) throw new Error('Error al obtener los detalles de la cotización');
+  return res.json();
+};
+
+export const updateCotizacionEstado = async (cotizacion_id: string, estado: string) => {
+  const res = await fetch(`${API_URL}/api/cotizaciones/${cotizacion_id}/estado`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado }),
+  });
+  if (!res.ok) throw new Error('Error al actualizar el estado de la cotización');
+  return res.json();
+};

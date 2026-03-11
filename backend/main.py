@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
-from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate, ClienteCreate, ClienteUpdate, VentaCreate
+from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate, ClienteCreate, ClienteUpdate, VentaCreate, CotizacionCreate, CotizacionUpdate
 import pandas as pd
 import io
 import math
@@ -363,3 +363,73 @@ def obtener_detalles_venta(venta_id: str):
         return {"data": result.data}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- MÓDULO DE COTIZACIONES ---
+
+# 18. Crear Cotización
+@app.post("/api/cotizaciones")
+def crear_cotizacion(cotizacion: CotizacionCreate):
+    try:
+        nueva_cotizacion_data = {
+            "negocio_id": cotizacion.negocio_id,
+            "cliente_id": cotizacion.cliente_id,
+            "numero_cotizacion": cotizacion.numero_cotizacion,
+            "subtotal": cotizacion.subtotal,
+            "descuento_global": cotizacion.descuento_global,
+            "total": cotizacion.total,
+            "estado": cotizacion.estado
+        }
+        
+        resultado_cotizacion = supabase.table("cotizaciones").insert(nueva_cotizacion_data).execute()
+        if not resultado_cotizacion.data:
+            raise Exception("Error al insertar la cotización")
+            
+        cot_id = resultado_cotizacion.data[0]["id"]
+        
+        detalles_a_insertar = []
+        for detalle in cotizacion.detalles:
+            detalles_a_insertar.append({
+                "cotizacion_id": cot_id,
+                "producto_id": detalle.producto_id,
+                "cantidad": detalle.cantidad,
+                "precio_unitario": detalle.precio_unitario,
+                "costo_unitario": detalle.costo_unitario,
+                "descuento_item": detalle.descuento_item
+            })
+            
+        if detalles_a_insertar:
+            supabase.table("cotizacion_detalles").insert(detalles_a_insertar).execute()
+            
+        return {"mensaje": "Cotización registrada exitosamente", "cotizacion_id": cot_id}
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 19. Obtener Historial de Cotizaciones
+@app.get("/api/cotizaciones/{negocio_id}")
+def obtener_cotizaciones(negocio_id: str):
+    try:
+        result = supabase.table("cotizaciones").select("*, clientes(nombre)").eq("negocio_id", negocio_id).order("fecha_emision", desc=True).execute()
+        return {"data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 20. Obtener detalles de una Cotización
+@app.get("/api/cotizaciones/detalle/{cotizacion_id}")
+def obtener_detalles_cotizacion(cotizacion_id: str):
+    try:
+        result = supabase.table("cotizacion_detalles").select("*, productos(nombre)").eq("cotizacion_id", cotizacion_id).execute()
+        return {"data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 21. Actualizar estado de Cotización
+@app.put("/api/cotizaciones/{cotizacion_id}/estado")
+def actualizar_estado_cotizacion(cotizacion_id: str, cotizacion: CotizacionUpdate):
+    try:
+        result = supabase.table("cotizaciones").update({"estado": cotizacion.estado}).eq("id", cotizacion_id).execute()
+        return {"mensaje": f"Cotización marcada como {cotizacion.estado}", "data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
