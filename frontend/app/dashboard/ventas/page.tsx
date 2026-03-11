@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { getVentas } from '@/lib/api';
+import { getVentas, getVentaDetalles, getNegocio } from '@/lib/api';
 import {
     Search,
     FileText,
@@ -9,7 +9,9 @@ import {
     DollarSign,
     CreditCard,
     TrendingUp,
-    Store
+    Store,
+    Download,
+    Loader2
 } from 'lucide-react';
 
 interface Venta {
@@ -25,6 +27,124 @@ export default function VentasPage() {
     const [ventas, setVentas] = useState<Venta[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+    const handleDownloadPDF = async (venta: Venta) => {
+        try {
+            setDownloadingId(venta.id);
+
+            // Cargar jsPDF y autoTable desde CDN
+            if (!(window as any).jspdf) {
+                await new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                    script.onload = resolve;
+                    document.head.appendChild(script);
+                });
+                await new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js';
+                    script.onload = resolve;
+                    document.head.appendChild(script);
+                });
+            }
+
+            const { jsPDF } = (window as any).jspdf;
+            const doc = new jsPDF();
+
+            const detallesRes = await getVentaDetalles(venta.id);
+            const detalles = detallesRes.data || [];
+
+            const negocioId = localStorage.getItem('negocio_id') || "";
+            let negocioName = "Mi Negocio";
+            let colorAcento = '#2563eb'; // Default blue-600
+
+            if (negocioId) {
+                try {
+                    const negRes = await getNegocio(negocioId);
+                    if (negRes) {
+                        negocioName = negRes.nombre || negocioName;
+                        if (negRes.color_acento) colorAcento = negRes.color_acento;
+                    }
+                } catch (e) {
+                    console.error("No se pudo cargar config del negocio", e);
+                }
+            }
+
+            // Parse hex color for PDF
+            const r = parseInt(colorAcento.slice(1, 3), 16) || 37;
+            const g = parseInt(colorAcento.slice(3, 5), 16) || 99;
+            const b = parseInt(colorAcento.slice(5, 7), 16) || 235;
+
+            // Diseño Premium - Encabezado
+            doc.setFillColor(r, g, b);
+            doc.rect(0, 0, 210, 40, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text(negocioName, 14, 25);
+
+            doc.setFontSize(10);
+            doc.text(`Factura: ${venta.numero_factura}`, 140, 20);
+            doc.text(`Fecha: ${new Date(venta.fecha_emision).toLocaleDateString('es-CO')}`, 140, 28);
+
+            // Información del Cliente y Estado
+            doc.setTextColor(50, 50, 50);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Detalles de facturación:', 14, 55);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(`Cliente: ${venta.clientes?.nombre || 'Consumidor Final'}`, 14, 62);
+            doc.text(`Estado: ${venta.estado}`, 14, 68);
+
+            // Generar Tabla de Productos
+            const tableColumn = ["Producto/Servicio", "Cant.", "Precio Unit.", "Total"];
+            const tableRows: any[] = [];
+
+            detalles.forEach((d: any) => {
+                const nombreItem = d.productos?.nombre || 'Item';
+                const totalItem = (d.cantidad * d.precio_unitario).toLocaleString('es-CO', { minimumFractionDigits: 2 });
+                const precioUn = d.precio_unitario.toLocaleString('es-CO', { minimumFractionDigits: 2 });
+                tableRows.push([nombreItem, d.cantidad.toString(), `$${precioUn}`, `$${totalItem}`]);
+            });
+
+            (doc as any).autoTable({
+                startY: 80,
+                head: [tableColumn],
+                body: tableRows,
+                theme: 'striped',
+                headStyles: { fillColor: [r, g, b] },
+                styles: { fontSize: 9.5, cellPadding: 4 },
+                columnStyles: {
+                    1: { halign: 'center' },
+                    2: { halign: 'right' },
+                    3: { halign: 'right' }
+                }
+            });
+
+            const finalY = (doc as any).lastAutoTable.finalY || 80;
+
+            // Totales al final
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Total a pagar: $${venta.total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`, 130, finalY + 15);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(150, 150, 150);
+            doc.text('¡Gracias por su compra!', 105, finalY + 35, { align: 'center' });
+
+            doc.save(`Factura_${venta.numero_factura}.pdf`);
+
+        } catch (error) {
+            console.error("Error generando PDF", error);
+            alert("Ocurrió un error generando el PDF de la factura.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
 
     useEffect(() => {
         const fetchVentas = async () => {
@@ -110,6 +230,7 @@ export default function VentasPage() {
                                 <th className="px-6 py-4">Fecha</th>
                                 <th className="px-6 py-4 text-center">Estado</th>
                                 <th className="px-6 py-4 text-right">Total</th>
+                                <th className="px-6 py-4 text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
@@ -153,8 +274,8 @@ export default function VentasPage() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${venta.estado === 'VIGENTE'
-                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 ring-1 ring-emerald-600/20 dark:ring-emerald-500/20'
-                                                    : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 ring-1 ring-red-600/20 dark:ring-red-500/20'
+                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 ring-1 ring-emerald-600/20 dark:ring-emerald-500/20'
+                                                : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 ring-1 ring-red-600/20 dark:ring-red-500/20'
                                                 }`}>
                                                 {venta.estado}
                                             </span>
@@ -163,6 +284,20 @@ export default function VentasPage() {
                                             <span className="font-bold text-gray-900 dark:text-white">
                                                 ${venta.total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button
+                                                onClick={() => handleDownloadPDF(venta)}
+                                                disabled={downloadingId === venta.id}
+                                                className="inline-flex items-center justify-center p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded-lg transition-colors disabled:opacity-50"
+                                                title="Descargar Factura PDF"
+                                            >
+                                                {downloadingId === venta.id ? (
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                ) : (
+                                                    <Download className="w-5 h-5" />
+                                                )}
+                                            </button>
                                         </td>
                                     </tr>
                                 ))

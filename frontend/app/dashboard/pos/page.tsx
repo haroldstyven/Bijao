@@ -19,6 +19,7 @@ interface Producto {
     precio_venta: number;
     stock_actual: number;
     categoria: string;
+    tipo?: string;
     color?: string;
 }
 
@@ -33,6 +34,7 @@ interface CartItem {
     price: number;
     qty: number;
     stock: number;
+    tipo?: string;
 }
 
 export default function POSPage() {
@@ -84,19 +86,20 @@ export default function POSPage() {
         setCart(currentCart => {
             const existing = currentCart.find(item => item.id === product.id);
             if (existing) {
-                // check stock
-                if (existing.qty + 1 > product.stock_actual) return currentCart;
+                // check stock (only if not a service)
+                if (product.tipo !== 'SERVICIO' && existing.qty + 1 > product.stock_actual) return currentCart;
                 return currentCart.map(item =>
                     item.id === product.id ? { ...item, qty: item.qty + 1 } : item
                 );
             }
-            if (product.stock_actual <= 0) return currentCart;
+            if (product.tipo !== 'SERVICIO' && product.stock_actual <= 0) return currentCart;
             return [...currentCart, {
                 id: product.id,
                 name: product.nombre,
                 price: product.precio_venta,
                 qty: 1,
-                stock: product.stock_actual
+                stock: product.stock_actual,
+                tipo: product.tipo
             }];
         });
     };
@@ -107,7 +110,7 @@ export default function POSPage() {
                 if (item.id === id) {
                     const newQty = item.qty + delta;
                     if (newQty <= 0) return { ...item, qty: 0 }; // Will be filtered out later if we wanted
-                    if (newQty > item.stock) return item;
+                    if (item.tipo !== 'SERVICIO' && newQty > item.stock) return item;
                     return { ...item, qty: newQty };
                 }
                 return item;
@@ -223,20 +226,22 @@ export default function POSPage() {
                         <div className="col-span-full py-20 text-center text-gray-500">No hay productos disponibles</div>
                     ) : (
                         filteredProducts.map((product) => {
-                            const stockStateColor = product.stock_actual <= 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600';
+                            const isAgotado = product.tipo !== 'SERVICIO' && product.stock_actual <= 0;
+                            const stockStateColor = product.tipo === 'SERVICIO' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400' : (isAgotado ? 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400');
+                            const stockLabel = product.tipo === 'SERVICIO' ? 'Disponible' : (product.stock_actual > 0 ? `${product.stock_actual} en stock` : 'Agotado');
 
                             return (
                                 <div
                                     key={product.id}
                                     onClick={() => addToCart(product)}
-                                    className={`bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden group flex flex-col ${product.stock_actual <= 0 ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    className={`bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden group flex flex-col ${isAgotado ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
                                     {/* Image Placeholder */}
                                     <div className="h-32 bg-gray-50 dark:bg-slate-700/50 flex items-center justify-center relative">
                                         <Box className="h-10 w-10 text-gray-300 dark:text-gray-600" />
                                         <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-colors" />
                                         <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-md ${stockStateColor}`}>
-                                            {product.stock_actual > 0 ? `${product.stock_actual} en stock` : 'Agotado'}
+                                            {stockLabel}
                                         </span>
                                     </div>
 
@@ -249,7 +254,7 @@ export default function POSPage() {
                                         <div className="mt-3 flex items-center justify-between">
                                             <span className="font-bold text-blue-600 dark:text-blue-400">${(product.precio_venta || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             <button
-                                                disabled={product.stock_actual <= 0}
+                                                disabled={isAgotado}
                                                 className="h-8 w-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors disabled:opacity-50"
                                             >
                                                 <Plus className="h-4 w-4" />
