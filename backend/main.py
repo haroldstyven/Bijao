@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, File, UploadFile, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
-from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate, ClienteCreate, ClienteUpdate, VentaCreate, CotizacionCreate, CotizacionUpdate
+from models import UserRegister, UserLogin, NegocioUpdate, ProductoCreate, ProductoUpdate, ClienteCreate, ClienteUpdate, VentaCreate, CotizacionCreate, CotizacionUpdate, CampanaMarketingCreate, CampanaMarketingUpdate
 import pandas as pd
 import io
 import math
@@ -546,5 +546,119 @@ def obtener_metricas(negocio_id: str, current_user = Depends(verificar_acceso_ne
         
     except Exception as e:
         print(f"[METRICAS ERROR] {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+# --- MÓDULO DE MARKETING ---
+
+# 23. Obtener Campañas
+@app.get("/api/marketing/campanas/{negocio_id}")
+def obtener_campanas(negocio_id: str, current_user = Depends(verificar_acceso_negocio)):
+    try:
+        result = supabase.table("campanas_marketing").select("*, productos(nombre)").eq("negocio_id", negocio_id).order("fecha_inicio", desc=True).execute()
+        return {"data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 24. Crear Campaña
+@app.post("/api/marketing/campanas")
+def crear_campana(campana: CampanaMarketingCreate, current_user = Depends(get_current_user)):
+    try:
+        if current_user.negocio_id and str(campana.negocio_id) != str(current_user.negocio_id):
+            raise HTTPException(status_code=403, detail="Permiso denegado")
+            
+        data = campana.dict(exclude_unset=True)
+        result = supabase.table("campanas_marketing").insert(data).execute()
+        return {"mensaje": "Campaña creada exitosamente", "data": result.data}
+    except Exception as e:
+        print(f"[MARKETING ERROR] {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 25. Actualizar Campaña
+@app.put("/api/marketing/campanas/{campana_id}")
+def actualizar_campana(campana_id: str, campana: CampanaMarketingUpdate, current_user = Depends(get_current_user)):
+    try:
+        update_data = {k: v for k, v in campana.dict(exclude_unset=True).items() if v is not None}
+        if not update_data:
+            return {"mensaje": "No hay datos para actualizar"}
+        result = supabase.table("campanas_marketing").update(update_data).eq("id", campana_id).execute()
+        return {"mensaje": "Campaña actualizada", "data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 26. Eliminar Campaña
+@app.delete("/api/marketing/campanas/{campana_id}")
+def eliminar_campana(campana_id: str, current_user = Depends(get_current_user)):
+    try:
+        supabase.table("campanas_marketing").delete().eq("id", campana_id).execute()
+        return {"mensaje": "Campaña eliminada exitosamente"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 27. Insights de Marketing
+@app.get("/api/marketing/insights/{negocio_id}")
+def obtener_insights(negocio_id: str, current_user = Depends(verificar_acceso_negocio)):
+    try:
+        ventas_db = supabase.table("ventas").select("total, cliente_id").eq("negocio_id", negocio_id).execute()
+        
+        insights = [
+            {"id": 1, "title": "Prefieren Servicios o Productos Altamente Rentables", "percentage": 15, "color": "text-purple-600 bg-purple-50 border-purple-100"},
+            {"id": 2, "title": "Clientes Recurrentes Frecuentes", "percentage": 0, "color": "text-blue-600 bg-blue-50 border-blue-100"},
+            {"id": 3, "title": "En Riesgo de Abandono (Churn)", "percentage": 10, "color": "text-red-600 bg-red-50 border-red-100"}
+        ]
+         
+        if ventas_db.data:
+            df = pd.DataFrame(ventas_db.data)
+            if 'cliente_id' in df.columns:
+                conteo_clientes = df['cliente_id'].dropna().value_counts()
+                recurrentes = (conteo_clientes > 1).sum()
+                total_unicos = df['cliente_id'].dropna().nunique()
+                
+                if total_unicos > 0:
+                    insights[1]["percentage"] = int((recurrentes / total_unicos) * 100)
+                
+        return {"data": insights}
+    except Exception as e:
+        print(f"[INSIGHTS ERROR] {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+# 28. Campañas Sugeridas IA
+@app.get("/api/marketing/sugerencias/{negocio_id}")
+def obtener_sugerencias(negocio_id: str, current_user = Depends(verificar_acceso_negocio)):
+    try:
+        productos_db = supabase.table("productos").select("*").eq("negocio_id", negocio_id).execute()
+        sugerencias = []
+        
+        if productos_db.data:
+            df_prod = pd.DataFrame(productos_db.data)
+            df_prod['stock_actual'] = pd.to_numeric(df_prod['stock_actual'], errors='coerce').fillna(0)
+            
+            alto_stock = df_prod[df_prod['stock_actual'] > 20]
+            if not alto_stock.empty:
+                prod = alto_stock.iloc[0]
+                sugerencias.append({
+                    "id": f"sug_{prod['id']}",
+                    "type": "Promoción",
+                    "title": f"Liquidar Stock: {prod['nombre']}",
+                    "desc": f"El algoritmo detectó abundancia de unidades ({int(prod['stock_actual'])}) de '{prod['nombre']}'. Crea una campaña individual de promoción a toda tu base para rotar este inventario urgentemente.",
+                    "metric": "Optimiza Cashflow",
+                    "producto_id": prod['id'],
+                    "meta_ventas": int(prod['stock_actual'] * 0.5),
+                    "duracion_dias": 15
+                })
+        
+        if not sugerencias:
+            sugerencias.append({
+                "id": "sug_generic",
+                "type": "Retención",
+                "title": "Descuento para Clientes Inactivos",
+                "desc": "Tenemos prospectos que no han comprado recientemente. Ofréceles un 10% en su próxima compra para reactivarlos y asegurar su lealtad.",
+                "metric": "Evita el Churn",
+                "producto_id": None,
+                "meta_ventas": 5,
+                "duracion_dias": 30
+            })
+            
+        return {"data": sugerencias}
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

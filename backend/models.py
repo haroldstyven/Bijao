@@ -90,3 +90,18 @@ class CotizacionCreate(BaseModel):
 
 class CotizacionUpdate(BaseModel):
     estado: str
+
+class CampanaMarketingCreate(BaseModel):
+    negocio_id: str
+    nombre: str
+    tipo_alcance: str
+    origen: Optional[str] = "MANUAL"
+    producto_id: Optional[str] = None
+    segmento_id: Optional[str] = None
+    meta_ventas: int
+    duracion_dias: Optional[int] = 30
+    estado: Optional[str] = "ACTIVA"
+
+class CampanaMarketingUpdate(BaseModel):
+    estado: Optional[str] = None
+    avance_actual: Optional[int] = None

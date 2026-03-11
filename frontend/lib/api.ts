@@ -211,3 +211,46 @@ export const getMetricas = async (negocio_id: string) => {
   const res = await fetch(`${API_URL}/api/metricas/${negocio_id}`, { headers: getAuthHeaders() });
   return handleResponse(res);
 };
+
+// --- MARKETING API ---
+
+export const getCampanas = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/marketing/campanas/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
+
+export const createCampana = async (data: any) => {
+  const res = await fetch(`${API_URL}/api/marketing/campanas`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+};
+
+export const updateCampana = async (campana_id: string, updateData: any) => {
+  const res = await fetch(`${API_URL}/api/marketing/campanas/${campana_id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updateData),
+  });
+  return handleResponse(res);
+};
+
+export const deleteCampana = async (campana_id: string) => {
+  const res = await fetch(`${API_URL}/api/marketing/campanas/${campana_id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  return handleResponse(res);
+};
+
+export const getMarketingInsights = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/marketing/insights/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
+
+export const getMarketingSugerencias = async (negocio_id: string) => {
+  const res = await fetch(`${API_URL}/api/marketing/sugerencias/${negocio_id}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
